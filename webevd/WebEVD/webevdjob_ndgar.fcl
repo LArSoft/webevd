@@ -1,0 +1,37 @@
+#GArSoft Services
+#include "DetectorClocks.fcl"
+#include "DetectorProperties.fcl"
+#include "GArProperties.fcl"
+#include "Geometry_CDR.fcl"
+#include "RunHistory.fcl"
+#include "ECALProperties.fcl"
+
+#include "WebEVD.fcl"
+
+
+process_name: WebEVD
+
+source:
+{
+  module_type: RootInput
+}
+
+services:
+{
+ Geometry:               @local::standard_geo
+ ExptGeoHelperInterface: @local::standard_geometry_helper
+ DetectorClocks:         @local::standard_clocks
+ DetectorProperties:     @local::standard_detproperties
+ GArProperties:          @local::standard_garproperties
+ ECALProperties:          @local::standard_ecalproperties
+}
+
+physics:
+{
+  analyzers:
+  {
+    evd: @local::standard_webevd
+  }
+
+  evd_path: [ evd ]
+}

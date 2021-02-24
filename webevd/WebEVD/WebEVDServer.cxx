@@ -546,6 +546,7 @@ void SerializePlanes(const geo::GeometryCore* geom,
   bool first = true;
 
   json << "  \"planes\": {\n";
+if(geom){
   for(geo::PlaneID plane: geom->IteratePlaneIDs()){
     const geo::PlaneGeo& planegeo = geom->Plane(plane);
     const int view = planegeo.View();
@@ -580,6 +581,7 @@ void SerializePlanes(const geo::GeometryCore* geom,
          << "\"depth\": " << depth << ", "
          << "\"normal\": " << n << "}";
   }
+}
   json << "\n  }";
 }
 
@@ -593,17 +595,21 @@ void SerializeGeometry(const geo::GeometryCore* geom,
   json << ",\n\n";
 
   json << "  \"cryos\": [\n";
+if(geom){
   for(unsigned int i = 0; i < geom->Ncryostats(); ++i){
     json << "    " << geom->Cryostat(i);
     if(i != geom->Ncryostats()-1) json << ",\n"; else json << "\n";
   }
+}
   json << "  ],\n\n";
 
   json << "  \"opdets\": [\n";
+if(geom){
   for(unsigned int i = 0; i < geom->NOpDets(); ++i){
     json << "    " << geom->OpDetGeoFromOpDet(i);
     if(i != geom->NOpDets()-1) json << ",\n"; else json << "\n";
   }
+}
   json << "  ]\n";
   json << "}\n";
 }
@@ -614,6 +620,7 @@ SerializeHits(const T& evt, const geo::GeometryCore* geom, JSONFormatter& json)
 {
   std::map<art::InputTag, std::map<geo::PlaneID, std::vector<recob::Hit>>> plane_hits;
 
+if(geom){
   for(art::InputTag tag: evt.template getInputTags<std::vector<recob::Hit>>()){
     typename T::template HandleT<std::vector<recob::Hit>> hits; // deduce handle type
     evt.getByLabel(tag, hits);
@@ -633,6 +640,7 @@ SerializeHits(const T& evt, const geo::GeometryCore* geom, JSONFormatter& json)
       }
     }
   } // end for tag
+}
 
   json << plane_hits;
 }
@@ -678,6 +686,7 @@ template<class T> void SerializeDigitTraces(const T& evt,
   // [tag][plane][wire index][t0]
   std::map<art::InputTag, std::map<geo::PlaneID, std::map<int, std::map<int, std::vector<short>>>>> traces;
 
+if(geom){
   for(art::InputTag tag: evt.template getInputTags<std::vector<raw::RawDigit>>()){
     typename T::template HandleT<std::vector<raw::RawDigit>> digs; // deduce handle type
     evt.getByLabel(tag, digs);
@@ -693,6 +702,7 @@ template<class T> void SerializeDigitTraces(const T& evt,
       } // end for wire
     } // end for dig
   } // end for tag
+}
 
   json << traces;
 }
@@ -705,6 +715,7 @@ template<class T> void SerializeWireTraces(const T& evt,
   // [tag][plane][wire][t0]
   std::map<art::InputTag, std::map<geo::PlaneID, std::map<int, std::map<int, std::vector<float>>>>> traces;
 
+if(geom){
   for(art::InputTag tag: evt.template getInputTags<std::vector<recob::Wire>>()){
     typename T::template HandleT<std::vector<recob::Wire>> wires; // deduce handle type
     evt.getByLabel(tag, wires);
@@ -717,6 +728,7 @@ template<class T> void SerializeWireTraces(const T& evt,
       traces[tag][plane][wire.Wire] = ToSnippets(rbwire.Signal());
     } // end for rbwire
   } // end for tag
+}
 
   json << traces;
 }
@@ -734,7 +746,7 @@ template<class T> void _HandleGetJSON(std::string doc, int sock, const T* evt, c
   else if(doc == "/tracks.json")      SerializeProduct<recob::Track>(*evt, json);
   else if(doc == "/spacepoints.json") SerializeProduct<recob::SpacePoint>(*evt, json);
   else if(doc == "/vtxs.json")        SerializeProduct<recob::Vertex>(*evt, json);
-  else if(doc == "/trajs.json")       SerializeProductByLabel<simb::MCParticle>(*evt, "largeant", json);
+  else if(doc == "/trajs.json")       SerializeProductByLabel<simb::MCParticle>(*evt, /*"largeant"*/"edepconvert", json);
   else if(doc == "/mctruth.json")     SerializeProduct<simb::MCTruth>(*evt, json);
   else if(doc == "/opflashes.json")   SerializeProduct<recob::OpFlash>(*evt, json);
   else if(doc == "/hits.json")        SerializeHits(*evt, geom, json);
