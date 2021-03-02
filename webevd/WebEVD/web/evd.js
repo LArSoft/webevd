@@ -785,7 +785,7 @@ function add_tracks(trajs, group, must_be_charged)
                 colIdx += 1;
             }
 
-            color_map[track_pdg] = col;
+            if(track_pdg != -1) color_map[track_pdg] = col;
         }
 
         let trkgeom = new THREE.BufferGeometry();

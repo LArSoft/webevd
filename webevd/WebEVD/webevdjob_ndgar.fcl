@@ -24,6 +24,8 @@ services:
  DetectorProperties:     @local::standard_detproperties
  GArProperties:          @local::standard_garproperties
  ECALProperties:         @local::standard_ecalproperties
+
+ InputSeeker: {}
 }
 
 physics:

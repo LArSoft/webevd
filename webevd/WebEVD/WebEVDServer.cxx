@@ -35,6 +35,9 @@
 #include "lardataalg/DetectorInfo/DetectorPropertiesData.h"
 
 #include "garsoft/Geometry/GeometryCore.h"
+#include "garsoft/ReconstructionDataProducts/Track.h"
+#include "garsoft/ReconstructionDataProducts/TrackTrajectory.h"
+#include "garsoft/ReconstructionDataProducts/Vertex.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -382,6 +385,12 @@ JSONFormatter& operator<<(JSONFormatter& json, const recob::Vertex& vtx)
 }
 
 // ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::Vertex& vtx)
+{
+  return json << TVector3(vtx.Position());
+}
+
+// ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const simb::MCTruth& mct)
 {
   // Don't show MCTruth for cosmic rays, which can be extremely
@@ -409,6 +418,22 @@ JSONFormatter& operator<<(JSONFormatter& json, const recob::Track& track)
   }
 
   return json << Dict<std::vector<geo::Point_t>>("positions", pts);
+}
+
+// ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::Track& trk)
+{
+  const std::vector<geo::Point_t> pts = {{trk.Vertex()[0], trk.Vertex()[1], trk.Vertex()[2]},
+                                         {trk.End()[0], trk.End()[1], trk.End()[2]}};
+
+  return json << Dict<std::vector<geo::Point_t>>("positions", pts);
+}
+
+// ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::TrackTrajectory& traj)
+{
+  // TODO difference between FWD and BAK?
+  return json << Dict<std::vector<TVector3>>("positions", traj.getBAKTrajectory());
 }
 
 // ----------------------------------------------------------------------------
@@ -816,9 +841,12 @@ template<class T> void _HandleGetJSON(std::string doc, int sock, const T* evt, c
   JSONFormatter json(ss);
 
   /***/if(doc == "/evtid.json")       SerializeEventID(*evt, json);
-  else if(doc == "/tracks.json")      SerializeProduct<recob::Track>(*evt, json);
+  //  else if(doc == "/tracks.json")      SerializeProduct<recob::Track>(*evt, json);
+  //  else if(doc == "/tracks.json")      SerializeProduct<gar::rec::Track>(*evt, json);
+  else if(doc == "/tracks.json")      SerializeProduct<gar::rec::TrackTrajectory>(*evt, json);
   else if(doc == "/spacepoints.json") SerializeProduct<recob::SpacePoint>(*evt, json);
-  else if(doc == "/vtxs.json")        SerializeProduct<recob::Vertex>(*evt, json);
+  //  else if(doc == "/vtxs.json")        SerializeProduct<recob::Vertex>(*evt, json);
+  else if(doc == "/vtxs.json")        SerializeProduct<gar::rec::Vertex>(*evt, json);
   else if(doc == "/trajs.json")       SerializeProductByLabel<simb::MCParticle>(*evt, /*"largeant"*/"edepconvert", json);
   else if(doc == "/mctruth.json")     SerializeProduct<simb::MCTruth>(*evt, json);
   else if(doc == "/opflashes.json")   SerializeProduct<recob::OpFlash>(*evt, json);
