@@ -661,31 +661,48 @@ void SerializeGeometry(const gar::geo::GeometryCore* geom,
 
   const TVector3 origin(geom->GetOriginX(), geom->GetOriginY(), geom->GetOriginZ());
 
-  const std::vector<ShapeDict_t> mpd{CuboidGeom(geom->GetMPDX(), geom->GetMPDY(), geom->GetMPDZ(), geom->GetMPDHalfWidth(), geom->GetMPDHalfHeight(), .5*geom->GetMPDLength())};
+  const std::vector<ShapeDict_t> mpd =
+    {CuboidGeom(geom->GetMPDX(), geom->GetMPDY(), geom->GetMPDZ(), geom->GetMPDHalfWidth(), geom->GetMPDHalfHeight(), .5*geom->GetMPDLength())};
 
-  const std::vector<ShapeDict_t> lar{CuboidGeom(geom->GetLArTPCX(), geom->GetLArTPCY(), geom->GetLArTPCZ(), geom->GetLArTPCHalfWidth(), geom->GetLArTPCHalfHeight(), .5*geom->GetLArTPCLength())};
+  const std::vector<ShapeDict_t> lar =
+    {CuboidGeom(geom->GetLArTPCX(), geom->GetLArTPCY(), geom->GetLArTPCZ(), geom->GetLArTPCHalfWidth(), geom->GetLArTPCHalfHeight(), .5*geom->GetLArTPCLength())};
 
-  const std::vector<ShapeDict_t> active_lar{CuboidGeom(geom->GetActiveLArTPCX(), geom->GetActiveLArTPCY(), geom->GetActiveLArTPCZ(), geom->GetActiveLArTPCHalfWidth(), geom->GetActiveLArTPCHalfHeight(), .5*geom->GetActiveLArTPCLength())};
+  const std::vector<ShapeDict_t> active_lar =
+    {CuboidGeom(geom->GetActiveLArTPCX(), geom->GetActiveLArTPCY(), geom->GetActiveLArTPCZ(), geom->GetActiveLArTPCHalfWidth(), geom->GetActiveLArTPCHalfHeight(), .5*geom->GetActiveLArTPCLength())};
 
   const TVector3 tpccent(geom->TPCXCent(), geom->TPCYCent(), geom->TPCZCent());
-  const std::vector<ShapeDict_t> tpc = {CylinderGeom(tpccent, geom->TPCRadius(), geom->TPCLength())};
+  const std::vector<ShapeDict_t> tpc =
+    {CylinderGeom(tpccent, geom->TPCRadius(), geom->TPCLength())};
 
-  const std::vector<ShapeDict_t> garlite = {CylinderGeom(geom->GArLiteXCent(), geom->GArLiteYCent(), geom->GArLiteZCent(),
-                                                         geom->GArLiteRadius(), geom->GArLiteLength())};
+  const std::vector<ShapeDict_t> garlite =
+    {CylinderGeom(geom->GArLiteXCent(), geom->GArLiteYCent(), geom->GArLiteZCent(), geom->GArLiteRadius(), geom->GArLiteLength())};
 
-  const std::vector<ShapeDict_t> iroc = {CylinderGeom(tpccent, geom->GetIROCInnerRadius(), geom->TPCLength()),
-                                         CylinderGeom(tpccent, geom->GetIROCOuterRadius(), geom->TPCLength())};
+  const std::vector<ShapeDict_t> iroc =
+    {CylinderGeom(tpccent, geom->GetIROCInnerRadius(), geom->TPCLength()),
+     CylinderGeom(tpccent, geom->GetIROCOuterRadius(), geom->TPCLength())};
 
-  // TODO GetOROCPadHeightChangeRadius
-  const std::vector<ShapeDict_t> oroc = {CylinderGeom(tpccent, geom->GetOROCInnerRadius(), geom->TPCLength()),
-                                         CylinderGeom(tpccent, geom->GetOROCOuterRadius(), geom->TPCLength())};
+  const std::vector<ShapeDict_t> oroc =
+    {CylinderGeom(tpccent, geom->GetOROCInnerRadius(), geom->TPCLength()),
+     CylinderGeom(tpccent, geom->GetOROCOuterRadius(), geom->TPCLength())};
+  //     CylinderGeom(tpccent, geom->GetOROCPadHeightChangeRadius(), geom->TPCLength())};
 
-  // TODO GetECALEndcap etc
-  const std::vector<ShapeDict_t> ecal = {PrismGeom(tpccent, geom->GetECALInnerBarrelRadius(), geom->TPCLength(), geom->GetECALInnerSymmetry()),
-                                         PrismGeom(tpccent, geom->GetECALOuterBarrelRadius(), geom->TPCLength(), geom->GetECALInnerSymmetry())};
+  const std::vector<ShapeDict_t> ecal =
+    {PrismGeom(tpccent, geom->GetECALInnerBarrelRadius(), geom->TPCLength(), geom->GetECALInnerSymmetry()),
+     PrismGeom(tpccent, geom->GetECALOuterBarrelRadius(), geom->TPCLength(), geom->GetECALInnerSymmetry())};
 
-  const std::vector<ShapeDict_t> muid = {PrismGeom(tpccent, geom->GetMuIDInnerBarrelRadius(), geom->TPCLength(), geom->GetMuIDInnerSymmetry()),
-                                         PrismGeom(tpccent, geom->GetMuIDOuterBarrelRadius(), geom->TPCLength(), geom->GetMuIDInnerSymmetry())};
+  const std::vector<ShapeDict_t> muid =
+    {PrismGeom(tpccent, geom->GetMuIDInnerBarrelRadius(), geom->TPCLength(), geom->GetMuIDInnerSymmetry()),
+     PrismGeom(tpccent, geom->GetMuIDOuterBarrelRadius(), geom->TPCLength(), geom->GetMuIDInnerSymmetry())};
+
+  const TVector3 endcapcentp((geom->GetECALEndcapStartX()+geom->GetECALEndcapOuterX())/2, tpccent.Y(), tpccent.Z());
+  const TVector3 endcapcentn(-endcapcentp.X(), tpccent.Y(), tpccent.Z());
+  const double dx = geom->GetECALEndcapOuterX() - geom->GetECALEndcapStartX();
+
+  const std::vector<ShapeDict_t> endcap =
+    {CylinderGeom(endcapcentp, geom->GetECALInnerEndcapRadius(), dx),
+     CylinderGeom(endcapcentp, geom->GetECALOuterEndcapRadius(), dx),
+     CylinderGeom(endcapcentn, geom->GetECALInnerEndcapRadius(), dx),
+     CylinderGeom(endcapcentn, geom->GetECALOuterEndcapRadius(), dx)};
 
 
   Dict<TVector3,
@@ -705,7 +722,10 @@ void SerializeGeometry(const gar::geo::GeometryCore* geom,
     dict["Active&nbsp;LAr"] = active_lar;
   }
   if(geom->HasTrackerScDetector()) dict["GArLite"] = garlite;
-  if(geom->HasECALDetector()) dict["ECAL"] = ecal;
+  if(geom->HasECALDetector()){
+    dict["ECAL"] = ecal;
+    dict["ECAL&nbsp;endcaps"] = endcap;
+  }
   if(geom->HasMuonDetector()) dict["MuID"] = muid;
   if(geom->HasGasTPCDetector()) dict["TPC"] = tpc;
 
