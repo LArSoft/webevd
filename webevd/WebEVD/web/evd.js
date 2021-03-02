@@ -669,7 +669,7 @@ geom.then(geom => {
             let line = new THREE.LineSegments(edges, mat_geo);
 
             // Tip over to lie along the z axis
-            if(vol.shape == 'cylinder' || vol.shape == 'prism') line.rotation.set(Math.PI/2, 0, 0);
+            if(vol.shape == 'cylinder' || vol.shape == 'prism') line.rotation.set(0, 0, Math.PI/2);
 
             line.position.set(center.x, center.y, center.z);
             line.updateMatrixWorld();
