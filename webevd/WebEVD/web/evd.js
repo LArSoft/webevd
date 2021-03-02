@@ -489,10 +489,13 @@ handle_digs_or_wires(planes, xdigs, digs, 'digs_dropdown', 'dig_');
 handle_digs_or_wires(planes, xwires, wires, 'wires_dropdown', 'wire_');
 
 // Compute center-of-mass (where the camera looks)
-let com = planes.then(planes => {
+let com = geom.then(geom => {
+    // Use geom.origin if it exists
+    if(geom.origin != undefined) return ArrToVec(geom.origin);
+
     let com = new THREE.Vector3();
     let nplanes = 0;
-    for(let key in planes){
+    for(let key in geom.planes){
         com.add(ArrToVec(planes[key].center));
         nplanes += 1; // javascript is silly and doesn't have any good size() method
     }
@@ -1263,6 +1266,11 @@ window.UVView2D = function(){
 window.VUView2D = function(){
     camera.layers.enable(kVU);
     AnimateTo(vuperp, new THREE.Vector3(1, 0, 0), 1e-6, VUView);
+    TwoDControls();
+}
+
+window.TopView2D = function(){
+    AnimateTo(new THREE.Vector3(0, +1, 0), new THREE.Vector3(1, 0, 0), 1e-6, NoView);
     TwoDControls();
 }
 
