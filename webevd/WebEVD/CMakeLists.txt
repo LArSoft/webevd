@@ -10,6 +10,7 @@ set( evd_lib_list ${ART_FRAMEWORK_CORE}
                   cetlib
                   cetlib_except
                   larcorealg_Geometry
+                  Geometry # garsoft
                   lardataobj_RawData
                   lardataobj_RecoBase
                   lardataalg_DetectorInfo

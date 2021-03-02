@@ -441,8 +441,9 @@ JSONFormatter& operator<<(JSONFormatter& json, const recob::OpFlash& flash)
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const geo::CryostatGeo& cryo)
 {
-  return json << Dict<geo::Point_t>("min", cryo.BoundingBox().Min(),
-                                    "max", cryo.BoundingBox().Max());
+  return json << Dict<geo::Point_t, std::string>("shape", "cuboid",
+                                                 "min", cryo.BoundingBox().Min(),
+                                                 "max", cryo.BoundingBox().Max());
 }
 
 // ----------------------------------------------------------------------------
@@ -450,9 +451,10 @@ JSONFormatter& operator<<(JSONFormatter& json, const geo::OpDetGeo& opdet)
 {
   const geo::Point_t center = opdet.GetCenter();
   const geo::Vector_t size(opdet.Width()/2, opdet.Height()/2, opdet.Length()/2);
-  return json << Dict<geo::OpDetID, geo::Point_t, double>("name", opdet.ID(),
-                                                          "min", center-size,
-                                                          "max", center+size);
+  return json << Dict<geo::OpDetID, geo::Point_t, std::string>("shape", "cuboid",
+                                                               "name", opdet.ID(),
+                                                               "min", center-size,
+                                                               "max", center+size);
 }
 
 // ----------------------------------------------------------------------------
@@ -572,6 +574,53 @@ Dict<Dict<int, double, TVector3>> SerializePlanes(const gar::geo::GeometryCore* 
   return ret;
 }
 
+typedef Dict<TVector3, std::string, double, int> ShapeDict_t;
+
+// ----------------------------------------------------------------------------
+ShapeDict_t CuboidGeom(TVector3 center, TVector3 halfsize)
+{
+  return {"shape", "cuboid",
+      "min", center-halfsize,
+      "max", center+halfsize};
+}
+
+// ----------------------------------------------------------------------------
+ShapeDict_t CuboidGeom(double cx, double cy, double cz, double dx, double dy, double dz)
+{
+  return CuboidGeom(TVector3(cx, cy, cz), TVector3(dx, dy, dz));
+}
+
+// ----------------------------------------------------------------------------
+ShapeDict_t CylinderGeom(TVector3 center, double radius, double length)
+{
+  return {"shape", "cylinder",
+      "center", center,
+      "radius", radius,
+      "length", length};
+}
+
+// ----------------------------------------------------------------------------
+ShapeDict_t CylinderGeom(double cx, double cy, double cz, double radius, double length)
+{
+  return CylinderGeom(TVector3(cx, cy, cz), radius, length);
+}
+
+// ----------------------------------------------------------------------------
+ShapeDict_t PrismGeom(TVector3 center, double radius, double length, int sides)
+{
+  return {"shape", "prism",
+      "center", center,
+      "radius", radius,
+      "length", length,
+      "sides", sides};
+}
+
+// ----------------------------------------------------------------------------
+ShapeDict_t PrismGeom(double cx, double cy, double cz, double radius, double length, int sides)
+{
+  return PrismGeom(TVector3(cx, cy, cz), radius, length, sides);
+}
+
 // ----------------------------------------------------------------------------
 void SerializeGeometry(const gar::geo::GeometryCore* geom,
                        const detinfo::DetectorPropertiesData& detprop,
@@ -587,88 +636,55 @@ void SerializeGeometry(const gar::geo::GeometryCore* geom,
 
   const TVector3 origin(geom->GetOriginX(), geom->GetOriginY(), geom->GetOriginZ());
 
-  TVector3 center(geom->GetMPDX(), geom->GetMPDY(), geom->GetMPDZ());
-  TVector3 size(geom->GetMPDHalfWidth(), geom->GetMPDHalfHeight(), .5*geom->GetMPDLength());
-  const std::vector<Dict<TVector3>> mpd{{"min", center-size, "max", center+size}};
+  const std::vector<ShapeDict_t> mpd{CuboidGeom(geom->GetMPDX(), geom->GetMPDY(), geom->GetMPDZ(), geom->GetMPDHalfWidth(), geom->GetMPDHalfHeight(), .5*geom->GetMPDLength())};
 
-  // LAr and ActiveLAr are zeros in practice
-  center = TVector3(geom->GetLArTPCX(), geom->GetLArTPCY(), geom->GetLArTPCZ());
-  size = TVector3(geom->GetLArTPCHalfWidth(), geom->GetLArTPCHalfHeight(), .5*geom->GetLArTPCLength());
-  const std::vector<Dict<TVector3>> lar{{"min", center-size, "max", center+size}};
+  const std::vector<ShapeDict_t> lar{CuboidGeom(geom->GetLArTPCX(), geom->GetLArTPCY(), geom->GetLArTPCZ(), geom->GetLArTPCHalfWidth(), geom->GetLArTPCHalfHeight(), .5*geom->GetLArTPCLength())};
 
-  center = TVector3(geom->GetActiveLArTPCX(), geom->GetActiveLArTPCY(), geom->GetActiveLArTPCZ());
-  size = TVector3(geom->GetActiveLArTPCHalfWidth(), geom->GetActiveLArTPCHalfHeight(), .5*geom->GetActiveLArTPCLength());
-  const std::vector<Dict<TVector3>> active_lar{{"min", center-size, "max", center+size}};
+  const std::vector<ShapeDict_t> active_lar{CuboidGeom(geom->GetActiveLArTPCX(), geom->GetActiveLArTPCY(), geom->GetActiveLArTPCZ(), geom->GetActiveLArTPCHalfWidth(), geom->GetActiveLArTPCHalfHeight(), .5*geom->GetActiveLArTPCLength())};
+
+  const TVector3 tpccent(geom->TPCXCent(), geom->TPCYCent(), geom->TPCZCent());
+  const std::vector<ShapeDict_t> tpc = {CylinderGeom(tpccent, geom->TPCRadius(), geom->TPCLength())};
+
+  const std::vector<ShapeDict_t> garlite = {CylinderGeom(geom->GArLiteXCent(), geom->GArLiteYCent(), geom->GArLiteZCent(),
+                                                         geom->GArLiteRadius(), geom->GArLiteLength())};
+
+  const std::vector<ShapeDict_t> iroc = {CylinderGeom(tpccent, geom->GetIROCInnerRadius(), geom->TPCLength()),
+                                         CylinderGeom(tpccent, geom->GetIROCOuterRadius(), geom->TPCLength())};
+
+  // TODO GetOROCPadHeightChangeRadius
+  const std::vector<ShapeDict_t> oroc = {CylinderGeom(tpccent, geom->GetOROCInnerRadius(), geom->TPCLength()),
+                                         CylinderGeom(tpccent, geom->GetOROCOuterRadius(), geom->TPCLength())};
+
+  // TODO GetECALEndcap etc
+  const std::vector<ShapeDict_t> ecal = {PrismGeom(tpccent, geom->GetECALInnerBarrelRadius(), geom->TPCLength(), geom->GetECALInnerSymmetry()),
+                                         PrismGeom(tpccent, geom->GetECALOuterBarrelRadius(), geom->TPCLength(), geom->GetECALInnerSymmetry())};
+
+  const std::vector<ShapeDict_t> muid = {PrismGeom(tpccent, geom->GetMuIDInnerBarrelRadius(), geom->TPCLength(), geom->GetMuIDInnerSymmetry()),
+                                         PrismGeom(tpccent, geom->GetMuIDOuterBarrelRadius(), geom->TPCLength(), geom->GetMuIDInnerSymmetry())};
 
 
-  center = TVector3(geom->TPCXCent(), geom->TPCYCent(), geom->TPCZCent());
-  // TODO should be a cylinder
-  size = TVector3(geom->TPCRadius(), geom->TPCRadius(), .5*geom->TPCLength());
-  const std::vector<Dict<TVector3>> tpc{{"min", center-size, "max", center+size}};
+  Dict<TVector3,
+       std::vector<ShapeDict_t>,
+       decltype(&planes),
+       std::vector<const geo::CryostatGeo*>,
+       std::vector<const geo::OpDetGeo*>> dict("origin", origin,
+                                               "planes", &planes,
+                                               "Cryostats", cryos,
+                                               "OpDets", opdets,
+                                               "MPD", mpd,
+                                               "IROC", iroc,
+                                               "OROC", oroc);
 
-
-  json << Dict<TVector3,
-               std::vector<Dict<TVector3>>,
-               decltype(&planes),
-               std::vector<const geo::CryostatGeo*>,
-               std::vector<const geo::OpDetGeo*>>("origin", origin,
-                                                  "planes", &planes,
-                                                  "Cryostats", cryos,
-                                                  "OpDets", opdets,
-                                                  "MPD", mpd,
-                                                  "LAr", lar,
-                                                  "Active&nbsp;LAr", active_lar,
-                                                  "TPC", tpc);
-
-// GarLiteX/Y/ZCent
-// GArLiteRadius
-// GArLiteLength
-
-// TPCRadius
-// TPCLength
-// TPCX/Y/ZCent
-
-// GetIROC/OROCInner/OutRadius
-// GetOROCPadHeightChangeRadius
-
-// GetECALInner/OuterBarrelRadius
-
-// GetECALInner/OuterEndcapRadius
-
-//   GetECALInnerSymmetry // number of sides
-
-// GetECALBarrelSideLength
-// GetECALBarrelApothemLength
-// GetECALEndcapSideLength
-// GetECALEndcapApothemLength
-
-// GetECALEndcapStartX
-// GetECALEndcapOuterX
-
-// GetMuIDInnerBarrelRadius
-// GetMuIDOuterBarrelRadius
-// GetMuIDInnerSymmetry
-
-// GetMuIDBarrelSideLength
-// GetMuIDBarrelApothemLength
-
-  //  json << "{ \"min\": "  << (center-size) << ", \"max\": " << (center+size) << " }";
-
-  /*
-  for(unsigned int i = 0; i < geom->Ncryostats(); ++i){
-    json << "    " << geom->Cryostat(i);
-    if(i != geom->Ncryostats()-1) json << ",\n"; else json << "\n";
+  if(geom->HasLArTPCDetector()){
+    dict["LAr"] = lar;
+    dict["Active&nbsp;LAr"] = active_lar;
   }
-}
-  json << "  ],\n\n";
+  if(geom->HasTrackerScDetector()) dict["GArLite"] = garlite;
+  if(geom->HasECALDetector()) dict["ECAL"] = ecal;
+  if(geom->HasMuonDetector()) dict["MuID"] = muid;
+  if(geom->HasGasTPCDetector()) dict["TPC"] = tpc;
 
-  json << "  \"opdets\": [\n";
-if(geom){
-  for(unsigned int i = 0; i < geom->NOpDets(); ++i){
-    json << "    " << geom->OpDetGeoFromOpDet(i);
-    if(i != geom->NOpDets()-1) json << ",\n"; else json << "\n";
-  }
-  */
+  json << dict;
 }
 
 // ----------------------------------------------------------------------------

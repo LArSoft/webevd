@@ -644,16 +644,31 @@ geom.then(geom => {
         let labels_div = undefined;
 
         for(let vol of geom[label]){
-            console.log(label, vol);
-            let r0 = ArrToVec(vol.min);
-            let r1 = ArrToVec(vol.max);
+            let center = undefined;
+            let threegeom = undefined;
+            if(vol.shape == 'cuboid'){
+                let r0 = ArrToVec(vol.min);
+                let r1 = ArrToVec(vol.max);
+                center = new THREE.Vector3((r0.x+r1.x)/2, (r0.y+r1.y)/2, (r0.z+r1.z)/2);
 
-            let boxgeom = new THREE.BoxBufferGeometry(r1.x-r0.x, r1.y-r0.y, r1.z-r0.z);
+                threegeom = new THREE.BoxBufferGeometry(r1.x-r0.x, r1.y-r0.y, r1.z-r0.z);
+            }
+            if(vol.shape == 'cylinder'){
+                center = ArrToVec(vol.center);
+                threegeom = new THREE.CylinderGeometry(vol.radius, vol.radius, vol.length, 16, 1, true);
+            }
+            if(vol.shape == 'prism'){
+                center = ArrToVec(vol.center);
+                threegeom = new THREE.CylinderGeometry(vol.radius, vol.radius, vol.length, vol.sides, 1, true);
+            }
 
-            let edges = new THREE.EdgesGeometry(boxgeom);
+            let edges = new THREE.EdgesGeometry(threegeom);
             let line = new THREE.LineSegments(edges, mat_geo);
 
-            line.position.set((r0.x+r1.x)/2, (r0.y+r1.y)/2, (r0.z+r1.z)/2);
+            // Tip over to lie along the z axis
+            if(vol.shape == 'cylinder' || vol.shape == 'prism') line.rotation.set(Math.PI/2, 0, 0);
+
+            line.position.set(center.x, center.y, center.z);
             line.updateMatrixWorld();
 
             for(let i = 0; i < kNLayers; ++i) line.layers.enable(i);
@@ -664,7 +679,7 @@ geom.then(geom => {
                 let d = document.createElement('div');
                 d.className = 'label';
                 d.appendChild(document.createTextNode(vol.name));
-                d.pos = new THREE.Vector3((r0.x+r1.x)/2, (r0.y+r1.y)/2, (r0.z+r1.z)/2); // stash the 3D position on the HTML element
+                d.pos = center;
                 if(labels_div == undefined){
                     labels_div = document.createElement('div');
                     document.getByLabel('labels_div').appendChild(labels_div);
@@ -1043,7 +1058,6 @@ function animate() {
 
     for(let labels of document.getElementById('labels_div').children){
         if(labels == axislabels_div) continue;
-        console.log(labels);
         if(labels.style.display != "none") PaintLabels(labels);
     }
 
