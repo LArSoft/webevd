@@ -448,11 +448,11 @@ JSONFormatter& operator<<(JSONFormatter& json, const geo::CryostatGeo& cryo)
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const geo::OpDetGeo& opdet)
 {
+  const geo::Point_t center = opdet.GetCenter();
+  const geo::Vector_t size(opdet.Width()/2, opdet.Height()/2, opdet.Length()/2);
   return json << Dict<geo::OpDetID, geo::Point_t, double>("name", opdet.ID(),
-                                                          "center", opdet.GetCenter(),
-                                                          "length", opdet.Length(),
-                                                          "width", opdet.Width(),
-                                                          "height", opdet.Height());
+                                                          "min", center-size,
+                                                          "max", center+size);
 }
 
 // ----------------------------------------------------------------------------
@@ -589,35 +589,35 @@ void SerializeGeometry(const gar::geo::GeometryCore* geom,
 
   TVector3 center(geom->GetMPDX(), geom->GetMPDY(), geom->GetMPDZ());
   TVector3 size(geom->GetMPDHalfWidth(), geom->GetMPDHalfHeight(), .5*geom->GetMPDLength());
-  const Dict<TVector3> mpd("min", center-size, "max", center+size);
+  const std::vector<Dict<TVector3>> mpd{{"min", center-size, "max", center+size}};
 
   // LAr and ActiveLAr are zeros in practice
   center = TVector3(geom->GetLArTPCX(), geom->GetLArTPCY(), geom->GetLArTPCZ());
   size = TVector3(geom->GetLArTPCHalfWidth(), geom->GetLArTPCHalfHeight(), .5*geom->GetLArTPCLength());
-  const Dict<TVector3> lar("min", center-size, "max", center+size);
+  const std::vector<Dict<TVector3>> lar{{"min", center-size, "max", center+size}};
 
   center = TVector3(geom->GetActiveLArTPCX(), geom->GetActiveLArTPCY(), geom->GetActiveLArTPCZ());
   size = TVector3(geom->GetActiveLArTPCHalfWidth(), geom->GetActiveLArTPCHalfHeight(), .5*geom->GetActiveLArTPCLength());
-  const Dict<TVector3> active_lar("min", center-size, "max", center+size);
+  const std::vector<Dict<TVector3>> active_lar{{"min", center-size, "max", center+size}};
 
 
   center = TVector3(geom->TPCXCent(), geom->TPCYCent(), geom->TPCZCent());
   // TODO should be a cylinder
   size = TVector3(geom->TPCRadius(), geom->TPCRadius(), .5*geom->TPCLength());
-  const Dict<TVector3> tpc("min", center-size, "max", center+size);
+  const std::vector<Dict<TVector3>> tpc{{"min", center-size, "max", center+size}};
 
 
   json << Dict<TVector3,
-               Dict<TVector3>,
+               std::vector<Dict<TVector3>>,
                decltype(&planes),
                std::vector<const geo::CryostatGeo*>,
                std::vector<const geo::OpDetGeo*>>("origin", origin,
                                                   "planes", &planes,
-                                                  "cryos", cryos,
-                                                  "opdets", opdets,
+                                                  "Cryostats", cryos,
+                                                  "OpDets", opdets,
                                                   "MPD", mpd,
                                                   "LAr", lar,
-                                                  "Active LAr", active_lar,
+                                                  "Active&nbsp;LAr", active_lar,
                                                   "TPC", tpc);
 
 // GarLiteX/Y/ZCent

@@ -50,8 +50,6 @@ import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@v0.110.0/example
 let geom = fetch("geom.json").then(response => response.json());
 // Extract the individual geometry pieces
 let planes = geom.then(geom => geom.planes);
-let cryos = geom.then(geom => geom.cryos);
-let opdets = geom.then(geom => geom.opdets);
 
 let truth_trajs = fetch("trajs.json").then(response => response.json());
 let xhits = fetch("hits.json").then(response => response.json());
@@ -397,8 +395,6 @@ planes.then(planes => {
 
     // Disable any buttons that are irrelevant for the current geometry
 
-    console.log(anyu, anyv, anyy, anyz, uvperp, vuperp);
-
     if(!anyu) document.getElementById('uview_button').style.display = 'none';
     if(!anyv) document.getElementById('vview_button').style.display = 'none';
 
@@ -577,8 +573,6 @@ reco_vtxs.then(reco_vtxs => {
     requestAnimationFrame(animate);
 }); // end "then" (reco_vtxs)
 
-let flashlabels_div = document.getElementById('flashlabels_div');
-
 async function handle_flashes(flashes_promise)
 {
     let flashes = await flashes_promise;
@@ -614,7 +608,7 @@ async function handle_flashes(flashes_promise)
             labeldiv.appendChild(div);
         }
 
-        flashlabels_div.appendChild(labeldiv);
+        document.getElementById('labels_div').appendChild(labeldiv);
 
         scene.add(group);
 
@@ -638,60 +632,55 @@ mctruth.then(mctruth => {
     document.getElementById('mctruth').innerHTML = str;
 });
 
-let cryogroup = new THREE.Group();
-AddDropdownToggle('physical_dropdown', cryogroup, 'Cryostats', true);
 
-cryos.then(cryos => {
-    // Physical cryostat
-    for(let cryo of cryos){
-        let r0 = ArrToVec(cryo.min);
-        let r1 = ArrToVec(cryo.max);
+geom.then(geom => {
+    for(let label in geom){
+        if(label == "planes" || label == "origin") continue;
 
-        let boxgeom = new THREE.BoxBufferGeometry(r1.x-r0.x, r1.y-r0.y, r1.z-r0.z);
+        if(geom[label].length == 0) continue;
 
-        let edges = new THREE.EdgesGeometry(boxgeom);
-        let line = new THREE.LineSegments(edges, mat_geo);
+        let group = new THREE.Group();
 
-        line.position.set((r0.x+r1.x)/2, (r0.y+r1.y)/2, (r0.z+r1.z)/2);
-        line.updateMatrixWorld();
+        let labels_div = undefined;
 
-        for(let i = 0; i < kNLayers; ++i) line.layers.enable(i);
+        for(let vol of geom[label]){
+            console.log(label, vol);
+            let r0 = ArrToVec(vol.min);
+            let r1 = ArrToVec(vol.max);
 
-        cryogroup.add(line);
-    }
+            let boxgeom = new THREE.BoxBufferGeometry(r1.x-r0.x, r1.y-r0.y, r1.z-r0.z);
 
-    scene.add(cryogroup);
-    requestAnimationFrame(animate);
-});
+            let edges = new THREE.EdgesGeometry(boxgeom);
+            let line = new THREE.LineSegments(edges, mat_geo);
 
-let opdetgroup = new THREE.Group();
-AddDropdownToggle('physical_dropdown', opdetgroup, 'OpDets', false);
-let opdetlabels_div = document.getElementById('opdetlabels_div');
+            line.position.set((r0.x+r1.x)/2, (r0.y+r1.y)/2, (r0.z+r1.z)/2);
+            line.updateMatrixWorld();
 
-opdets.then(opdets => {
-    // Physical OpDets
-    for(let opdet of opdets){
-        let boxgeom = new THREE.BoxBufferGeometry(opdet.width, opdet.height, opdet.length);
+            for(let i = 0; i < kNLayers; ++i) line.layers.enable(i);
 
-        let edges = new THREE.EdgesGeometry(boxgeom);
-        let line = new THREE.LineSegments(edges, mat_geo);
+            group.add(line);
 
-        let c = ArrToVec(opdet.center);
-        line.position.set(c.x, c.y, c.z);
-        line.updateMatrixWorld();
+            if(vol.name != undefined){
+                let d = document.createElement('div');
+                d.className = 'label';
+                d.appendChild(document.createTextNode(vol.name));
+                d.pos = new THREE.Vector3((r0.x+r1.x)/2, (r0.y+r1.y)/2, (r0.z+r1.z)/2); // stash the 3D position on the HTML element
+                if(labels_div == undefined){
+                    labels_div = document.createElement('div');
+                    document.getByLabel('labels_div').appendChild(labels_div);
+                }
+                labels_div.appendChild(d);
+            } // end if name
+        } // end for vol
 
-        for(let i = 0; i < kNLayers; ++i) line.layers.enable(i);
+        scene.add(group);
 
-        opdetgroup.add(line);
+        AddDropdownToggle('physical_dropdown', group, label, true);
 
-        let d = document.createElement('div');
-        d.className = 'label';
-        d.appendChild(document.createTextNode(opdet.name));
-        d.pos = c; // stash the 3D position on the HTML element
-        opdetlabels_div.appendChild(d);
-    }
+        if(labels_div != undefined)
+            AddDropdownToggle('labels_dropdown', labels_div, label, false);
+    } // end for label
 
-    scene.add(opdetgroup);
     requestAnimationFrame(animate);
 });
 
@@ -1051,10 +1040,11 @@ function animate() {
         requestAnimationFrame(animate);
 
     PaintAxes();
-    if(opdetlabels_div.style.display != "none") PaintLabels(opdetlabels_div);
-    if(tpclabels_div.style.display != "none") PaintLabels(tpclabels_div);
-    for(let label of flashlabels_div.children){
-        if(label.style.display != "none") PaintLabels(label);
+
+    for(let labels of document.getElementById('labels_div').children){
+        if(labels == axislabels_div) continue;
+        console.log(labels);
+        if(labels.style.display != "none") PaintLabels(labels);
     }
 
     gAnimReentrant = false;
@@ -1293,7 +1283,6 @@ window.PhysicalAxes = function(){SetAxesType(AXES_CMCM);}
 window.WireCmAxes   = function(){SetAxesType(AXES_WIRECM);}
 window.WireTickAxes = function(){SetAxesType(AXES_WIRETICK);}
 
-AddDropdownToggle('labels_dropdown', opdetlabels_div, 'OpDets', false);
 AddDropdownToggle('labels_dropdown', tpclabels_div, 'TPCs', false);
 
 function OnClick()
