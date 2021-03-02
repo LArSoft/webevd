@@ -324,134 +324,144 @@ bool endswith(const std::string& s, const std::string& suffix)
 }
 
 // ----------------------------------------------------------------------------
-JSONFormatter& operator<<(JSONFormatter& json, const art::InputTag& t)
+JSONFormatter& operator<<(JSONFormatter& json, const TVector3& v)
 {
-  json << "\"" << t.label();
-  if(!t.instance().empty()) json << ":" << t.instance();
-  if(!t.process().empty()) json << ":" << t.process();
-  json << "\"";
-  return json;
+  return json << std::vector<double>{v.X(), v.Y(), v.Z()};
+}
+
+// ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const geo::Point_t& pt)
+{
+  return json << std::vector<double>{pt.X(), pt.Y(), pt.Z()};
+}
+
+// ----------------------------------------------------------------------------
+
+std::string ToString(const art::InputTag& tag)
+{
+  std::string ret = tag.label();
+  if(!tag.instance().empty()) ret += ":"+tag.instance();
+  if(!tag.process().empty()) ret += ":"+tag.process();
+  return ret;
+}
+
+// ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const art::InputTag& tag)
+{
+  return json << ToString(tag);
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const geo::OpDetID& id)
 {
-  json << "\"" << std::string(id) << "\"";
-  return json;
+  return json << std::string(id);
 }
 
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const geo::PlaneID& plane)
 {
-  return json << "\"" << std::string(plane) << "\"";
+  return json << std::string(plane);
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const recob::Hit& hit)
 {
-  return json << "{\"wire\": " << geo::WireID(hit.WireID()).Wire
-              << ", \"tick\": " << hit.PeakTime()
-              << ", \"rms\": " << hit.RMS()
-              << ", \"peakamp\": " << hit.PeakAmplitude() << "}";
+  return json << Dict<unsigned int, double>("wire", geo::WireID(hit.WireID()).Wire,
+                                            "tick", hit.PeakTime(),
+                                            "rms", hit.RMS(),
+                                            "peakamp", hit.PeakAmplitude());
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const recob::Vertex& vtx)
 {
-  return json << TVector3(vtx.position().x(),
-                          vtx.position().y(),
-                          vtx.position().z());
+  return json << vtx.position();
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const simb::MCTruth& mct)
 {
-  return json << "\"" << MCTruthShortText(mct) << "\"";
+  // Don't show MCTruth for cosmic rays, which can be extremely
+  // lengthy. Ideally we should exclude them from the list entirely, but this
+  // requires less change to the structure of the code.
+  if(mct.Origin() == simb::kCosmicRay) return json << std::string();
+
+  return json << MCTruthShortText(mct);
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const recob::SpacePoint& sp)
 {
-  return json << TVector3(sp.XYZ());
+  return json << sp.position();
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const recob::Track& track)
 {
-  std::vector<TVector3> pts;
+  std::vector<geo::Point_t> pts;
 
   const recob::TrackTrajectory& traj = track.Trajectory();
   for(unsigned int j = traj.FirstValidPoint(); j <= traj.LastValidPoint(); ++j){
-    if(!traj.HasValidPoint(j)) continue;
-    const geo::Point_t pt = traj.LocationAtPoint(j);
-    pts.emplace_back(pt.X(), pt.Y(), pt.Z());
+    if(traj.HasValidPoint(j)) pts.push_back(traj.LocationAtPoint(j));
   }
 
-  return json << "{ \"positions\": " << pts << " }";
+  return json << Dict<std::vector<geo::Point_t>>("positions", pts);
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const simb::MCParticle& part)
 {
   const int apdg = abs(part.PdgCode());
-  if(apdg == 12 || apdg == 14 || apdg == 16) return json << "{ \"pdg\": " << apdg << ", \"positions\": [] }"; // decay neutrinos
   std::vector<TVector3> pts;
-  for(unsigned int j = 0; j < part.NumberTrajectoryPoints(); ++j){
-    pts.emplace_back(part.Vx(j), part.Vy(j), part.Vz(j));
+  if(apdg != 12 && apdg != 14 && apdg != 16){ // skip decay neutrinos
+    for(unsigned int j = 0; j < part.NumberTrajectoryPoints(); ++j){
+      pts.emplace_back(part.Vx(j), part.Vy(j), part.Vz(j));
+    }
   }
 
-  return json << "{ \"pdg\": " << apdg << ", \"positions\": " << pts << " }";
+  return json << Dict<int, std::vector<TVector3>>("pdg", apdg,
+                                                  "positions", pts);
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const recob::OpFlash& flash)
 {
-  json << std::map<std::string, double>{
-    {"tcenter", flash.Time()},
-    {"twidth", flash.TimeWidth()},
-    {"ycenter", flash.YCenter()},
-    {"ywidth", flash.YWidth()},
-    {"zcenter", flash.ZCenter()},
-    {"zwidth", flash.ZWidth()},
-    {"totpe", flash.TotalPE()}
-  };
-
-  return json;
+  return json << Dict<double>("tcenter", flash.Time(),
+                              "twidth", flash.TimeWidth(),
+                              "ycenter", flash.YCenter(),
+                              "ywidth", flash.YWidth(),
+                              "zcenter", flash.ZCenter(),
+                              "zwidth", flash.ZWidth(),
+                              "totpe", flash.TotalPE());
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const geo::CryostatGeo& cryo)
 {
-  const TVector3 r0(cryo.MinX(), cryo.MinY(), cryo.MinZ());
-  const TVector3 r1(cryo.MaxX(), cryo.MaxY(), cryo.MaxZ());
-  return json << "{ \"min\": "  << r0 << ", \"max\": " << r1 << " }";
+  return json << Dict<geo::Point_t>("min", cryo.BoundingBox().Min(),
+                                    "max", cryo.BoundingBox().Max());
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const geo::OpDetGeo& opdet)
 {
-  return json << "{ \"name\": " << opdet.ID() << ", "
-              << "\"center\": " << TVector3(opdet.GetCenter().X(),
-                                            opdet.GetCenter().Y(),
-                                            opdet.GetCenter().Z()) << ", "
-              << "\"length\": " << opdet.Length() << ", "
-              << "\"width\": " << opdet.Width() << ", "
-              << "\"height\": " << opdet.Height() << " }";
+  return json << Dict<geo::OpDetID, geo::Point_t, double>("name", opdet.ID(),
+                                                          "center", opdet.GetCenter(),
+                                                          "length", opdet.Length(),
+                                                          "width", opdet.Width(),
+                                                          "height", opdet.Height());
 }
 
 // ----------------------------------------------------------------------------
-JSONFormatter& operator<<(JSONFormatter& os, const PNGView& v)
+JSONFormatter& operator<<(JSONFormatter& json, const PNGView& v)
 {
-  bool first = true;
-  os << "{\"blocks\": [\n";
+  std::vector<Dict<int, std::string>> blocks;
+
   for(unsigned int ix = 0; ix < v.blocks.size(); ++ix){
     for(unsigned int iy = 0; iy < v.blocks[ix].size(); ++iy){
       const png_byte* b = v.blocks[ix][iy];
       if(!b) continue;
-
-      if(!first) os << ",\n";
-      first = false;
 
       int dataidx = 0;
       for(unsigned int d = 0; d < v.arena.data.size(); ++d){
@@ -465,47 +475,36 @@ JSONFormatter& operator<<(JSONFormatter& os, const PNGView& v)
       const int texdx = ((b-&v.arena.data[dataidx]->front())/4)%PNGArena::kArenaSize;
       const int texdy = ((b-&v.arena.data[dataidx]->front())/4)/PNGArena::kArenaSize;
 
-      os << "{"
-         << "\"x\": " << ix*PNGArena::kBlockSize << ", "
-         << "\"y\": " << iy*PNGArena::kBlockSize << ", "
-         << "\"dx\": " << PNGArena::kBlockSize << ", "
-         << "\"dy\": " << PNGArena::kBlockSize << ", "
-         << "\"fname\": \"" << v.arena.name << "_" << dataidx << "\", "
-         << "\"texdim\": " << PNGArena::kArenaSize << ", "
-         << "\"u\": " << texdx << ", "
-         << "\"v\": " << texdy << ", "
-         << "\"du\": " << PNGArena::kBlockSize << ", "
-         << "\"dv\": " << PNGArena::kBlockSize
-         << "}";
+      blocks.emplace_back("x", ix*PNGArena::kBlockSize,
+                          "y", iy*PNGArena::kBlockSize,
+                          "dx", PNGArena::kBlockSize,
+                          "dy", PNGArena::kBlockSize,
+                          "fname", v.arena.name+"_"+std::to_string(dataidx),
+                          "texdim", PNGArena::kArenaSize,
+                          "u", texdx,
+                          "v", texdy,
+                          "du", PNGArena::kBlockSize,
+                          "dv", PNGArena::kBlockSize);
     }
   }
-  os << "\n]}";
-  return os;
+
+  return json << Dict<decltype(blocks)>("blocks", blocks);
 }
 
 // ----------------------------------------------------------------------------
 template<class TProd, class TEvt> void
 SerializeProduct(const TEvt& evt, JSONFormatter& json)
 {
-  json << "{";
+  Dict<const std::vector<TProd>*> dict;
 
-  const std::vector<art::InputTag> tags = evt.template getInputTags<std::vector<TProd>>();
-
-  for(const art::InputTag& tag: tags){
-    json << "  " << tag << ": ";
-
+  for(const art::InputTag& tag: evt.template getInputTags<std::vector<TProd>>()){
     typename TEvt::template HandleT<std::vector<TProd>> prods; // deduce handle type
     evt.getByLabel(tag, prods);
 
-    json << *prods;
-
-    if(tag != tags.back()){
-      json << ",";
-    }
-    json << "\n";
+    dict[ToString(tag)] = prods.product();
   }
 
-  json << "}";
+  json << dict;
 }
 
 // ----------------------------------------------------------------------------
@@ -521,15 +520,16 @@ SerializeProductByLabel(const TEvt& evt,
     json << *prods;
   }
   else{
-    json << "[]";
+    json << std::vector<int>();
   }
 }
 
 // ----------------------------------------------------------------------------
 template<class T> void SerializeEventID(const T& evt, JSONFormatter& json)
 {
-  typedef std::map<std::string, int> EIdMap;
-  json << EIdMap({{"run", evt.run()}, {"subrun", evt.subRun()}, {"evt", evt.event()}});
+  json << Dict<int>("run", evt.run(),
+                    "subrun", evt.subRun(),
+                    "evt", evt.event());
 }
 
 // ----------------------------------------------------------------------------
@@ -539,50 +539,37 @@ void SerializeEventID(const ThreadsafeGalleryEvent& evt, JSONFormatter& json)
 }
 
 // ----------------------------------------------------------------------------
-void SerializePlanes(const geo::GeometryCore* geom,
-                     const detinfo::DetectorPropertiesData& detprop,
-                     JSONFormatter& json)
+Dict<Dict<int, double, TVector3>> SerializePlanes(const geo::GeometryCore* geom,
+                                                  const detinfo::DetectorPropertiesData& detprop)
 {
-  bool first = true;
+  Dict<Dict<int, double, TVector3>> ret;
 
-  json << "  \"planes\": {\n";
 if(geom){
   for(geo::PlaneID plane: geom->IteratePlaneIDs()){
     const geo::PlaneGeo& planegeo = geom->Plane(plane);
-    const int view = planegeo.View();
-    const unsigned int nwires = planegeo.Nwires();
-    const double pitch = planegeo.WirePitch();
-    const TVector3 c = planegeo.GetCenter();
-
-    const TVector3 d = planegeo.GetIncreasingWireDirection();
-    const TVector3 n = planegeo.GetNormalDirection();
-
-    const TVector3 wiredir = planegeo.GetWireDirection();
-    const double depth = planegeo.Depth(); // really height
 
     const double tick_origin = detprop.ConvertTicksToX(0, plane);
     const double tick_pitch = detprop.ConvertTicksToX(1, plane) - tick_origin;
 
-    const int maxTick = detprop.NumberTimeSamples();
-
-    if(!first) json << ",\n";
-    first = false;
-
-    json << "    " << plane << ": {"
-         << "\"view\": " << view << ", "
-         << "\"nwires\": " << nwires << ", "
-         << "\"pitch\": " << pitch << ", "
-         << "\"nticks\": " << maxTick << ", "
-         << "\"tick_origin\": " << tick_origin << ", "
-         << "\"tick_pitch\": " << tick_pitch << ", "
-         << "\"center\": " << c << ", "
-         << "\"across\": " << d << ", "
-         << "\"wiredir\": " << wiredir << ", "
-         << "\"depth\": " << depth << ", "
-         << "\"normal\": " << n << "}";
+    ret[std::string(plane)] = Dict<int, double, TVector3>
+      ("view", int(planegeo.View()),
+       "nwires", int(planegeo.Nwires()),
+       "pitch", planegeo.WirePitch(),
+       "nticks", int(detprop.NumberTimeSamples()),
+       "tick_origin", tick_origin,
+       "tick_pitch", tick_pitch,
+       "center", planegeo.GetCenter(),
+       "across", planegeo.GetIncreasingWireDirection(),
+       "wiredir", planegeo.GetWireDirection(),
+       "depth", planegeo.Depth(),
+       "width", planegeo.Width(),
+       "depthdir", planegeo.DepthDir(),
+       "widthdir", planegeo.WidthDir(),
+       "normal", planegeo.GetNormalDirection());
   }
 }
-  json << "\n  }";
+
+  return ret;
 }
 
 // ----------------------------------------------------------------------------
@@ -590,28 +577,19 @@ void SerializeGeometry(const geo::GeometryCore* geom,
                        const detinfo::DetectorPropertiesData& detprop,
                        JSONFormatter& json)
 {
-  json << "{\n";
-  SerializePlanes(geom, detprop, json);
-  json << ",\n\n";
+  const auto planes = SerializePlanes(geom, detprop);
 
-  json << "  \"cryos\": [\n";
-if(geom){
-  for(unsigned int i = 0; i < geom->Ncryostats(); ++i){
-    json << "    " << geom->Cryostat(i);
-    if(i != geom->Ncryostats()-1) json << ",\n"; else json << "\n";
-  }
-}
-  json << "  ],\n\n";
+  std::vector<const geo::CryostatGeo*> cryos;
+  if(geom) for(const geo::CryostatGeo& cryo: geom->IterateCryostats()) cryos.push_back(&cryo);
 
-  json << "  \"opdets\": [\n";
-if(geom){
-  for(unsigned int i = 0; i < geom->NOpDets(); ++i){
-    json << "    " << geom->OpDetGeoFromOpDet(i);
-    if(i != geom->NOpDets()-1) json << ",\n"; else json << "\n";
-  }
-}
-  json << "  ]\n";
-  json << "}\n";
+  std::vector<const geo::OpDetGeo*> opdets;
+  if(geom) for(unsigned int i = 0; i < geom->NOpDets(); ++i) opdets.push_back(&geom->OpDetGeoFromOpDet(i)); // IterateOpDets() doesn't seem to exist
+
+  json << Dict<decltype(&planes),
+               std::vector<const geo::CryostatGeo*>,
+               std::vector<const geo::OpDetGeo*>>("planes", &planes,
+                                                  "cryos", cryos,
+                                                  "opdets", opdets);
 }
 
 // ----------------------------------------------------------------------------
