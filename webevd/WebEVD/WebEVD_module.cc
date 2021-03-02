@@ -8,6 +8,8 @@
 #include "larcore/Geometry/Geometry.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
+#include "garsoft/Geometry/Geometry.h"
+
 #include "webevd/WebEVD/WebEVDServer.h"
 #include "webevd/WebEVD/InputSeeker.h"
 
@@ -26,6 +28,7 @@ protected:
   evd::WebEVDServer<art::Event> fServer;
 
   //  art::ServiceHandle<geo::Geometry> fGeom;
+  art::ServiceHandle<gar::geo::Geometry> fGeom;
 };
 
 DEFINE_ART_MODULE(WebEVD)
@@ -44,7 +47,7 @@ void WebEVD::endJob()
 void WebEVD::analyze(const art::Event& evt)
 {
   //  auto const detProp = art::ServiceHandle<detinfo::DetectorPropertiesService>()->DataFor(evt);
-  const Result res = fServer.serve(evt, 0/*fGeom.get()*/, *((detinfo::DetectorPropertiesData*)0)/*detProp*/);
+  const Result res = fServer.serve(evt, fGeom.get(), *((detinfo::DetectorPropertiesData*)0)/*detProp*/);
 
   switch(res.code){
   case kNEXT:

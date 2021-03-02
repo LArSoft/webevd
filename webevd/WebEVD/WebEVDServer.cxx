@@ -34,6 +34,8 @@
 #include "larcorealg/Geometry/GeometryCore.h"
 #include "lardataalg/DetectorInfo/DetectorPropertiesData.h"
 
+#include "garsoft/Geometry/GeometryCore.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 //#include <netinet/in.h>
@@ -539,12 +541,11 @@ void SerializeEventID(const ThreadsafeGalleryEvent& evt, JSONFormatter& json)
 }
 
 // ----------------------------------------------------------------------------
-Dict<Dict<int, double, TVector3>> SerializePlanes(const geo::GeometryCore* geom,
+Dict<Dict<int, double, TVector3>> SerializePlanes(const gar::geo::GeometryCore* geom,
                                                   const detinfo::DetectorPropertiesData& detprop)
 {
   Dict<Dict<int, double, TVector3>> ret;
-
-if(geom){
+  /*
   for(geo::PlaneID plane: geom->IteratePlaneIDs()){
     const geo::PlaneGeo& planegeo = geom->Plane(plane);
 
@@ -567,38 +568,116 @@ if(geom){
        "widthdir", planegeo.WidthDir(),
        "normal", planegeo.GetNormalDirection());
   }
-}
-
+  */
   return ret;
 }
 
 // ----------------------------------------------------------------------------
-void SerializeGeometry(const geo::GeometryCore* geom,
+void SerializeGeometry(const gar::geo::GeometryCore* geom,
                        const detinfo::DetectorPropertiesData& detprop,
                        JSONFormatter& json)
 {
   const auto planes = SerializePlanes(geom, detprop);
 
   std::vector<const geo::CryostatGeo*> cryos;
-  if(geom) for(const geo::CryostatGeo& cryo: geom->IterateCryostats()) cryos.push_back(&cryo);
+  //  for(const geo::CryostatGeo& cryo: geom->IterateCryostats()) cryos.push_back(&cryo);
 
   std::vector<const geo::OpDetGeo*> opdets;
-  if(geom) for(unsigned int i = 0; i < geom->NOpDets(); ++i) opdets.push_back(&geom->OpDetGeoFromOpDet(i)); // IterateOpDets() doesn't seem to exist
+  //  for(unsigned int i = 0; i < geom->NOpDets(); ++i) opdets.push_back(&geom->OpDetGeoFromOpDet(i)); // IterateOpDets() doesn't seem to exist
 
-  json << Dict<decltype(&planes),
+  const TVector3 origin(geom->GetOriginX(), geom->GetOriginY(), geom->GetOriginZ());
+
+  TVector3 center(geom->GetMPDX(), geom->GetMPDY(), geom->GetMPDZ());
+  TVector3 size(geom->GetMPDHalfWidth(), geom->GetMPDHalfHeight(), .5*geom->GetMPDLength());
+  const Dict<TVector3> mpd("min", center-size, "max", center+size);
+
+  // LAr and ActiveLAr are zeros in practice
+  center = TVector3(geom->GetLArTPCX(), geom->GetLArTPCY(), geom->GetLArTPCZ());
+  size = TVector3(geom->GetLArTPCHalfWidth(), geom->GetLArTPCHalfHeight(), .5*geom->GetLArTPCLength());
+  const Dict<TVector3> lar("min", center-size, "max", center+size);
+
+  center = TVector3(geom->GetActiveLArTPCX(), geom->GetActiveLArTPCY(), geom->GetActiveLArTPCZ());
+  size = TVector3(geom->GetActiveLArTPCHalfWidth(), geom->GetActiveLArTPCHalfHeight(), .5*geom->GetActiveLArTPCLength());
+  const Dict<TVector3> active_lar("min", center-size, "max", center+size);
+
+
+  center = TVector3(geom->TPCXCent(), geom->TPCYCent(), geom->TPCZCent());
+  // TODO should be a cylinder
+  size = TVector3(geom->TPCRadius(), geom->TPCRadius(), .5*geom->TPCLength());
+  const Dict<TVector3> tpc("min", center-size, "max", center+size);
+
+
+  json << Dict<TVector3,
+               Dict<TVector3>,
+               decltype(&planes),
                std::vector<const geo::CryostatGeo*>,
-               std::vector<const geo::OpDetGeo*>>("planes", &planes,
+               std::vector<const geo::OpDetGeo*>>("origin", origin,
+                                                  "planes", &planes,
                                                   "cryos", cryos,
-                                                  "opdets", opdets);
+                                                  "opdets", opdets,
+                                                  "MPD", mpd,
+                                                  "LAr", lar,
+                                                  "Active LAr", active_lar,
+                                                  "TPC", tpc);
+
+// GarLiteX/Y/ZCent
+// GArLiteRadius
+// GArLiteLength
+
+// TPCRadius
+// TPCLength
+// TPCX/Y/ZCent
+
+// GetIROC/OROCInner/OutRadius
+// GetOROCPadHeightChangeRadius
+
+// GetECALInner/OuterBarrelRadius
+
+// GetECALInner/OuterEndcapRadius
+
+//   GetECALInnerSymmetry // number of sides
+
+// GetECALBarrelSideLength
+// GetECALBarrelApothemLength
+// GetECALEndcapSideLength
+// GetECALEndcapApothemLength
+
+// GetECALEndcapStartX
+// GetECALEndcapOuterX
+
+// GetMuIDInnerBarrelRadius
+// GetMuIDOuterBarrelRadius
+// GetMuIDInnerSymmetry
+
+// GetMuIDBarrelSideLength
+// GetMuIDBarrelApothemLength
+
+  //  json << "{ \"min\": "  << (center-size) << ", \"max\": " << (center+size) << " }";
+
+  /*
+  for(unsigned int i = 0; i < geom->Ncryostats(); ++i){
+    json << "    " << geom->Cryostat(i);
+    if(i != geom->Ncryostats()-1) json << ",\n"; else json << "\n";
+  }
+}
+  json << "  ],\n\n";
+
+  json << "  \"opdets\": [\n";
+if(geom){
+  for(unsigned int i = 0; i < geom->NOpDets(); ++i){
+    json << "    " << geom->OpDetGeoFromOpDet(i);
+    if(i != geom->NOpDets()-1) json << ",\n"; else json << "\n";
+  }
+  */
 }
 
 // ----------------------------------------------------------------------------
 template<class T> void
-SerializeHits(const T& evt, const geo::GeometryCore* geom, JSONFormatter& json)
+SerializeHits(const T& evt, const gar::geo::GeometryCore* geom, JSONFormatter& json)
 {
   std::map<art::InputTag, std::map<geo::PlaneID, std::vector<recob::Hit>>> plane_hits;
 
-if(geom){
+  /*
   for(art::InputTag tag: evt.template getInputTags<std::vector<recob::Hit>>()){
     typename T::template HandleT<std::vector<recob::Hit>> hits; // deduce handle type
     evt.getByLabel(tag, hits);
@@ -618,7 +697,7 @@ if(geom){
       }
     }
   } // end for tag
-}
+  */
 
   json << plane_hits;
 }
@@ -658,13 +737,13 @@ template<class T> std::map<int, std::vector<T>> ToSnippets(const std::vector<T>&
 
 // ----------------------------------------------------------------------------
 template<class T> void SerializeDigitTraces(const T& evt,
-                                            const geo::GeometryCore* geom,
+                                            const gar::geo::GeometryCore* geom,
                                             JSONFormatter& json)
 {
   // [tag][plane][wire index][t0]
   std::map<art::InputTag, std::map<geo::PlaneID, std::map<int, std::map<int, std::vector<short>>>>> traces;
 
-if(geom){
+  /*
   for(art::InputTag tag: evt.template getInputTags<std::vector<raw::RawDigit>>()){
     typename T::template HandleT<std::vector<raw::RawDigit>> digs; // deduce handle type
     evt.getByLabel(tag, digs);
@@ -680,20 +759,20 @@ if(geom){
       } // end for wire
     } // end for dig
   } // end for tag
-}
+  */
 
   json << traces;
 }
 
 // ----------------------------------------------------------------------------
 template<class T> void SerializeWireTraces(const T& evt,
-                                           const geo::GeometryCore* geom,
+                                           const gar::geo::GeometryCore* geom,
                                            JSONFormatter& json)
 {
   // [tag][plane][wire][t0]
   std::map<art::InputTag, std::map<geo::PlaneID, std::map<int, std::map<int, std::vector<float>>>>> traces;
 
-if(geom){
+  /*
   for(art::InputTag tag: evt.template getInputTags<std::vector<recob::Wire>>()){
     typename T::template HandleT<std::vector<recob::Wire>> wires; // deduce handle type
     evt.getByLabel(tag, wires);
@@ -706,14 +785,14 @@ if(geom){
       traces[tag][plane][wire.Wire] = ToSnippets(rbwire.Signal());
     } // end for rbwire
   } // end for tag
-}
+  */
 
   json << traces;
 }
 
 
 // ----------------------------------------------------------------------------
-template<class T> void _HandleGetJSON(std::string doc, int sock, const T* evt, const geo::GeometryCore* geom, const detinfo::DetectorPropertiesData* detprop, ILazy* digs, ILazy* wires)
+template<class T> void _HandleGetJSON(std::string doc, int sock, const T* evt, const gar::geo::GeometryCore* geom, const detinfo::DetectorPropertiesData* detprop, ILazy* digs, ILazy* wires)
 {
   const std::string mime = "application/json";
 
@@ -746,7 +825,7 @@ template<class T> void _HandleGetJSON(std::string doc, int sock, const T* evt, c
 }
 
 // ----------------------------------------------------------------------------
-template<class T> void _HandleGet(std::string doc, int sock, const T* evt, ILazy* digs, ILazy* wires, const geo::GeometryCore* geom, const detinfo::DetectorPropertiesData* detprop)
+template<class T> void _HandleGet(std::string doc, int sock, const T* evt, ILazy* digs, ILazy* wires, const gar::geo::GeometryCore* geom, const detinfo::DetectorPropertiesData* detprop)
 {
   if(doc == "/") doc = "/index.html";
 
@@ -831,7 +910,7 @@ template<class T> int WebEVDServer<T>::EnsureListen()
 template<class T> class LazyDigits: public ILazy
 {
 public:
-  LazyDigits(const T& evt, const geo::GeometryCore* geom)
+  LazyDigits(const T& evt, const gar::geo::GeometryCore* geom)
     : fEvt(&evt), fGeom(geom), fArena("dig")
   {
   }
@@ -854,7 +933,7 @@ protected:
     std::lock_guard guard(fLock);
 
     if(!fEvt || !fGeom) return; // already init'd
-
+    /*
     for(art::InputTag tag: fEvt->template getInputTags<std::vector<raw::RawDigit>>()){
       typename T::template HandleT<std::vector<raw::RawDigit>> digs; // deduce handle type
       fEvt->getByLabel(tag, digs);
@@ -895,13 +974,13 @@ protected:
         } // end for wire
       } // end for dig
     } // end for tag
-
+    */
     fEvt = 0;
     fGeom = 0;
   }
 
   const T* fEvt;
-  const geo::GeometryCore* fGeom;
+  const gar::geo::GeometryCore* fGeom;
 
   std::mutex fLock;
   PNGArena fArena;
@@ -912,7 +991,7 @@ protected:
 template<class T> class LazyWires: public ILazy
 {
 public:
-  LazyWires(const T& evt, const geo::GeometryCore* geom)
+  LazyWires(const T& evt, const gar::geo::GeometryCore* geom)
     : fEvt(&evt), fGeom(geom), fArena("wire")
   {
   }
@@ -935,7 +1014,7 @@ protected:
     std::lock_guard guard(fLock);
 
     if(!fEvt || !fGeom) return; // already init'd
-
+    /*
     for(art::InputTag tag: fEvt->template getInputTags<std::vector<recob::Wire>>()){
       typename T::template HandleT<std::vector<recob::Wire>> wires; // deduce handle type
       fEvt->getByLabel(tag, wires);
@@ -966,14 +1045,14 @@ protected:
         } // end for wire
       } // end for rbwire
     } // end for tag
-
+    */
     fEvt = 0;
     fGeom = 0;
   }
 
 protected:
   const T* fEvt;
-  const geo::GeometryCore* fGeom;
+  const gar::geo::GeometryCore* fGeom;
 
   std::mutex fLock;
   PNGArena fArena;
@@ -984,7 +1063,8 @@ protected:
 // ----------------------------------------------------------------------------
 template<class T> Result WebEVDServer<T>::
 serve(const T& evt,
-      const geo::GeometryCore* geom,
+      //      const geo::GeometryCore* geom,
+      const gar::geo::GeometryCore* geom,
       const detinfo::DetectorPropertiesData& detprop)
 {
   // Don't want a sigpipe signal when the browser hangs up on us. This way we

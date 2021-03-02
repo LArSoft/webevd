@@ -174,7 +174,7 @@ int main(int argc, char** argv)
     std::cout << "\nDisplaying event " << aux.run() << ":" << aux.subRun() << ":" << aux.event() << std::endl << std::endl;
 
     evd::ThreadsafeGalleryEvent tsevt(&evt);
-    const evd::Result res = server.serve(tsevt, geom, detprop);
+    const evd::Result res = server.serve(tsevt, 0/*geom*/, detprop);
 
     switch(res.code){
     case evd::kNEXT:

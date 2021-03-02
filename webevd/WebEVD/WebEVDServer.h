@@ -7,6 +7,8 @@
 namespace geo{class GeometryCore;}
 namespace detinfo{class DetectorPropertiesData;}
 
+namespace gar{namespace geo{class GeometryCore;}}
+
 namespace evd
 {
   class PNGArena;
@@ -26,7 +28,8 @@ namespace evd
     ~WebEVDServer();
 
     Result serve(const T& evt,
-                 const geo::GeometryCore* geom,
+                 //                 const geo::GeometryCore* geom,
+                 const gar::geo::GeometryCore* geom,
                  const detinfo::DetectorPropertiesData& detprop);
 
   protected:
