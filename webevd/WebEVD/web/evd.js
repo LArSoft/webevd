@@ -735,8 +735,9 @@ async function handle_points(pts_promise, dropdown_name)
     for(let label in pts){
         let vtxs = [];
         let idcs = [];
-        for(let sp of pts[label]){
-            push_icosahedron_vtxs(ArrToVec(sp), .4, vtxs, idcs);
+        for(let pt of pts[label]){
+            let radius = ('radius' in pt) ? pt.radius : .4;
+            push_icosahedron_vtxs(ArrToVec(pt.pos), radius, vtxs, idcs);
         }
 
         let spgeom = new THREE.BufferGeometry();
@@ -755,8 +756,9 @@ async function handle_points(pts_promise, dropdown_name)
 handle_points(spacepoints, 'spacepoints_dropdown');
 
 handle_points(fetch("garhits.json").then(response => response.json()), 'garhits_dropdown');
-handle_points(fetch("calohits.json").then(response => response.json()), 'calohits_dropdown');
 handle_points(fetch("tpcclusts.json").then(response => response.json()), 'tpcclusts_dropdown');
+handle_points(fetch("calohits.json").then(response => response.json()), 'calohits_dropdown');
+handle_points(fetch("clusts.json").then(response => response.json()), 'clusts_dropdown');
 
 // Consistent coloring for each PDG.
 // Declared outside the function to ensure consistency across the many times

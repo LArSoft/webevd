@@ -37,6 +37,7 @@
 #include "garsoft/Geometry/GeometryCore.h"
 #include "garsoft/ReconstructionDataProducts/Hit.h"
 #include "garsoft/ReconstructionDataProducts/CaloHit.h"
+#include "garsoft/ReconstructionDataProducts/Cluster.h"
 #include "garsoft/ReconstructionDataProducts/TPCCluster.h"
 #include "garsoft/ReconstructionDataProducts/Track.h"
 #include "garsoft/ReconstructionDataProducts/TrackTrajectory.h"
@@ -407,25 +408,31 @@ JSONFormatter& operator<<(JSONFormatter& json, const simb::MCTruth& mct)
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const recob::SpacePoint& sp)
 {
-  return json << sp.position();
+  return json << Dict<geo::Point_t>("pos", sp.position());
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::Hit& hit)
 {
-  return json << TVector3(hit.Position()[0], hit.Position()[1], hit.Position()[2]);
+  return json << Dict<TVector3>("pos", TVector3(hit.Position()[0], hit.Position()[1], hit.Position()[2]));
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::CaloHit& hit)
 {
-  return json << TVector3(hit.Position()[0], hit.Position()[1], hit.Position()[2]);
+  return json << Dict<TVector3, double>("pos", TVector3(hit.Position()[0], hit.Position()[1], hit.Position()[2]), "radius", 2);
+}
+
+// ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::Cluster& clust)
+{
+  return json << Dict<TVector3, double>("pos", TVector3(clust.Position()[0], clust.Position()[1], clust.Position()[2]), "radius", 5);
 }
 
 // ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::TPCCluster& clust)
 {
-  return json << TVector3(clust.Position()[0], clust.Position()[1], clust.Position()[2]);
+  return json << Dict<TVector3>("pos", TVector3(clust.Position()[0], clust.Position()[1], clust.Position()[2]));
 }
 
 // ----------------------------------------------------------------------------
@@ -885,6 +892,7 @@ template<class T> void _HandleGetJSON(std::string doc, int sock, const T* evt, c
   else if(doc == "/spacepoints.json") SerializeProduct<recob::SpacePoint>(*evt, json);
   else if(doc == "/garhits.json")     SerializeProduct<gar::rec::Hit>(*evt, json);
   else if(doc == "/calohits.json")    SerializeProduct<gar::rec::CaloHit>(*evt, json);
+  else if(doc == "/clusts.json")      SerializeProduct<gar::rec::Cluster>(*evt, json);
   else if(doc == "/tpcclusts.json")   SerializeProduct<gar::rec::TPCCluster>(*evt, json);
   //  else if(doc == "/vtxs.json")        SerializeProduct<recob::Vertex>(*evt, json);
   else if(doc == "/vtxs.json")        SerializeProduct<gar::rec::Vertex>(*evt, json);
