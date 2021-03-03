@@ -712,6 +712,9 @@ void SerializeGeometry(const gar::geo::GeometryCore* geom,
 //   CylinderGeom(tpccent, geom->GetOROCPadHeightChangeRadius(), geom->TPCLength()),
      CylinderGeom(tpccent, geom->GetOROCOuterRadius(), geom->TPCLength())};
 
+  const std::vector<ShapeDict_t> cathode =
+    {CylinderGeom(tpccent, geom->GetOROCOuterRadius(), 0.1)};
+
   const std::vector<ShapeDict_t> ecal =
     {PrismGeom(tpccent, geom->GetECALInnerBarrelRadius(), geom->TPCLength(), geom->GetECALInnerSymmetry()),
      PrismGeom(tpccent, geom->GetECALOuterBarrelRadius(), geom->TPCLength(), geom->GetECALInnerSymmetry())};
@@ -740,7 +743,8 @@ void SerializeGeometry(const gar::geo::GeometryCore* geom,
                                                "Cryostats", cryos,
                                                "OpDets", opdets,
                                                "MPD", mpd,
-                                               "ROCs", roc);
+                                               "ROCs", roc,
+                                               "Cathode", cathode);
 
   if(geom->HasLArTPCDetector()){
     dict["LAr"] = lar;
