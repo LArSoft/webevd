@@ -35,6 +35,9 @@
 #include "lardataalg/DetectorInfo/DetectorPropertiesData.h"
 
 #include "garsoft/Geometry/GeometryCore.h"
+#include "garsoft/ReconstructionDataProducts/Hit.h"
+#include "garsoft/ReconstructionDataProducts/CaloHit.h"
+#include "garsoft/ReconstructionDataProducts/TPCCluster.h"
 #include "garsoft/ReconstructionDataProducts/Track.h"
 #include "garsoft/ReconstructionDataProducts/TrackTrajectory.h"
 #include "garsoft/ReconstructionDataProducts/Vertex.h"
@@ -408,6 +411,24 @@ JSONFormatter& operator<<(JSONFormatter& json, const recob::SpacePoint& sp)
 }
 
 // ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::Hit& hit)
+{
+  return json << TVector3(hit.Position()[0], hit.Position()[1], hit.Position()[2]);
+}
+
+// ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::CaloHit& hit)
+{
+  return json << TVector3(hit.Position()[0], hit.Position()[1], hit.Position()[2]);
+}
+
+// ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const gar::rec::TPCCluster& clust)
+{
+  return json << TVector3(clust.Position()[0], clust.Position()[1], clust.Position()[2]);
+}
+
+// ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const recob::Track& track)
 {
   std::vector<geo::Point_t> pts;
@@ -677,14 +698,12 @@ void SerializeGeometry(const gar::geo::GeometryCore* geom,
   const std::vector<ShapeDict_t> garlite =
     {CylinderGeom(geom->GArLiteXCent(), geom->GArLiteYCent(), geom->GArLiteZCent(), geom->GArLiteRadius(), geom->GArLiteLength())};
 
-  const std::vector<ShapeDict_t> iroc =
+  const double rocMidR = (geom->GetIROCOuterRadius()+geom->GetOROCInnerRadius())/2;
+  const std::vector<ShapeDict_t> roc =
     {CylinderGeom(tpccent, geom->GetIROCInnerRadius(), geom->TPCLength()),
-     CylinderGeom(tpccent, geom->GetIROCOuterRadius(), geom->TPCLength())};
-
-  const std::vector<ShapeDict_t> oroc =
-    {CylinderGeom(tpccent, geom->GetOROCInnerRadius(), geom->TPCLength()),
+     CylinderGeom(tpccent, rocMidR,                    geom->TPCLength()),
+//   CylinderGeom(tpccent, geom->GetOROCPadHeightChangeRadius(), geom->TPCLength()),
      CylinderGeom(tpccent, geom->GetOROCOuterRadius(), geom->TPCLength())};
-  //     CylinderGeom(tpccent, geom->GetOROCPadHeightChangeRadius(), geom->TPCLength())};
 
   const std::vector<ShapeDict_t> ecal =
     {PrismGeom(tpccent, geom->GetECALInnerBarrelRadius(), geom->TPCLength(), geom->GetECALInnerSymmetry()),
@@ -714,8 +733,7 @@ void SerializeGeometry(const gar::geo::GeometryCore* geom,
                                                "Cryostats", cryos,
                                                "OpDets", opdets,
                                                "MPD", mpd,
-                                               "IROC", iroc,
-                                               "OROC", oroc);
+                                               "ROCs", roc);
 
   if(geom->HasLArTPCDetector()){
     dict["LAr"] = lar;
@@ -865,6 +883,9 @@ template<class T> void _HandleGetJSON(std::string doc, int sock, const T* evt, c
   //  else if(doc == "/tracks.json")      SerializeProduct<gar::rec::Track>(*evt, json);
   else if(doc == "/tracks.json")      SerializeProduct<gar::rec::TrackTrajectory>(*evt, json);
   else if(doc == "/spacepoints.json") SerializeProduct<recob::SpacePoint>(*evt, json);
+  else if(doc == "/garhits.json")     SerializeProduct<gar::rec::Hit>(*evt, json);
+  else if(doc == "/calohits.json")    SerializeProduct<gar::rec::CaloHit>(*evt, json);
+  else if(doc == "/tpcclusts.json")   SerializeProduct<gar::rec::TPCCluster>(*evt, json);
   //  else if(doc == "/vtxs.json")        SerializeProduct<recob::Vertex>(*evt, json);
   else if(doc == "/vtxs.json")        SerializeProduct<gar::rec::Vertex>(*evt, json);
   else if(doc == "/trajs.json")       SerializeProductByLabel<simb::MCParticle>(*evt, /*"largeant"*/"edepconvert", json);

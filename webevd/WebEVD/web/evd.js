@@ -658,7 +658,7 @@ geom.then(geom => {
             }
             if(vol.shape == 'cylinder'){
                 center = ArrToVec(vol.center);
-                threegeom = new THREE.CylinderGeometry(vol.radius, vol.radius, vol.length, 16, 1, true);
+                threegeom = new THREE.CylinderGeometry(vol.radius, vol.radius, vol.length, 20, 1, true);
             }
             if(vol.shape == 'prism'){
                 center = ArrToVec(vol.center);
@@ -728,27 +728,35 @@ function AddDropdownToggle(dropdown_id, what, label, init = false,
     document.getElementById(dropdown_id).appendChild(btn);
 }
 
+async function handle_points(pts_promise, dropdown_name)
+{
+    let pts = await pts_promise;
 
-spacepoints.then(spacepoints => {
-    for(let label in spacepoints){
-        let spvtxs = [];
-        let spidxs = [];
-        for(let sp of spacepoints[label]){
-            push_icosahedron_vtxs(ArrToVec(sp), .4, spvtxs, spidxs);
+    for(let label in pts){
+        let vtxs = [];
+        let idcs = [];
+        for(let sp of pts[label]){
+            push_icosahedron_vtxs(ArrToVec(sp), .4, vtxs, idcs);
         }
 
         let spgeom = new THREE.BufferGeometry();
-        spgeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(spvtxs), 3));
-        spgeom.setIndex(new THREE.BufferAttribute(new Uint32Array(spidxs), 1));
-        let sps = new THREE.Mesh(spgeom, mat_sps);
-        for(let i = 0; i < kNLayers; ++i) sps.layers.enable(i);
-        scene.add(sps);
+        spgeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vtxs), 3));
+        spgeom.setIndex(new THREE.BufferAttribute(new Uint32Array(idcs), 1));
+        let mesh = new THREE.Mesh(spgeom, mat_sps);
+        for(let i = 0; i < kNLayers; ++i) mesh.layers.enable(i);
+        scene.add(mesh);
 
-        AddDropdownToggle('spacepoints_dropdown', sps, label);
-
-        requestAnimationFrame(animate);
+        AddDropdownToggle(dropdown_name, mesh, label);
     }
-}); // end then (spacepoints)
+
+    requestAnimationFrame(animate);
+}
+
+handle_points(spacepoints, 'spacepoints_dropdown');
+
+handle_points(fetch("garhits.json").then(response => response.json()), 'garhits_dropdown');
+handle_points(fetch("calohits.json").then(response => response.json()), 'calohits_dropdown');
+handle_points(fetch("tpcclusts.json").then(response => response.json()), 'tpcclusts_dropdown');
 
 // Consistent coloring for each PDG.
 // Declared outside the function to ensure consistency across the many times
