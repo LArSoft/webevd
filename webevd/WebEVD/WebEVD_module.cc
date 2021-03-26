@@ -8,7 +8,7 @@
 #include "larcore/Geometry/Geometry.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
-#include "garsoft/Geometry/Geometry.h"
+#include "garsoft/Geometry/GeometryGAr.h"
 
 #include "webevd/WebEVD/WebEVDServer.h"
 #include "webevd/WebEVD/InputSeeker.h"
@@ -28,7 +28,7 @@ protected:
   evd::WebEVDServer<art::Event> fServer;
 
   //  art::ServiceHandle<geo::Geometry> fGeom;
-  art::ServiceHandle<gar::geo::Geometry> fGeom;
+  art::ServiceHandle<gar::geo::GeometryGAr> fGeom;
 };
 
 DEFINE_ART_MODULE(WebEVD)

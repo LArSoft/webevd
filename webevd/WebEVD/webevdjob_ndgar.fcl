@@ -18,7 +18,7 @@ source:
 
 services:
 {
- Geometry:               @local::nd_hall_mpd_only_SPYv2_geo
+ GeometryGAr:            @local::nd_hall_mpd_only_SPYv2_geo
  ExptGeoHelperInterface: @local::standard_geometry_helper
  DetectorClocks:         @local::standard_clocks
  DetectorProperties:     @local::standard_detproperties
