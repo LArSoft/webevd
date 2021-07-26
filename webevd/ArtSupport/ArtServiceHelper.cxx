@@ -1,5 +1,4 @@
 #include "art/Framework/Services/Registry/ServiceRegistry.h"
-#include "fhiclcpp/make_ParameterSet.h"
 #include "fhiclcpp/intermediate_table.h"
 
 #include "webevd/ArtSupport/ArtServiceHelper.h"
@@ -44,6 +43,6 @@ void ArtServiceHelper::load_services(std::string const& config)
   std::istringstream is{config};
   fhicl::parse_document(is, lookup, table);
   fhicl::ParameterSet pset;
-  fhicl::make_ParameterSet(table, pset);
+  pset = fhicl::ParameterSet::make(table);
   static ArtServiceHelper helper{fully_processed(std::move(pset))};
 }
