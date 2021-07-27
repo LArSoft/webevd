@@ -1,5 +1,6 @@
 #include "webevd/WebEVD/InputSeeker.h"
 
+#include "art/Framework/Services/Registry/ServiceDefinitionMacros.h"
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 
 #include "art_root_io/RootInput.h"

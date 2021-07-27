@@ -1,7 +1,7 @@
 #ifndef INPUTSEEKER_H
 #define INPUTSEEKER_H
 
-#include "art/Framework/Services/Registry/ServiceMacros.h"
+#include "art/Framework/Services/Registry/ServiceDeclarationMacros.h"
 
 namespace art{class InputSource; class RootInput; class Worker;}
 
