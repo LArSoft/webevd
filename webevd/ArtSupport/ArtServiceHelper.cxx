@@ -3,15 +3,6 @@
 
 #include "webevd/ArtSupport/ArtServiceHelper.h"
 
-// The following is an ugly hack, but it is necessary for being able
-// to set the services manager.
-namespace art::test {
-  void set_manager_for_tests(ServicesManager* manager)
-  {
-    ServiceRegistry::instance().setManager(manager);
-  }
-}
-
 namespace {
   auto fully_processed(fhicl::ParameterSet&& pset)
   {
@@ -30,20 +21,16 @@ namespace {
 
 ArtServiceHelper::ArtServiceHelper(fhicl::ParameterSet&& pset) :
   activityRegistry_{},
-  servicesManager_{std::move(pset), activityRegistry_}
+  sharedResources_{},
+  servicesManager_{std::move(pset), activityRegistry_, sharedResources_}
 {
-  art::test::set_manager_for_tests(&servicesManager_);
   servicesManager_.forceCreation();
 }
 
 void ArtServiceHelper::load_services(std::string const& config)
 {
   cet::filepath_lookup lookup{"FHICL_FILE_PATH"};
-  fhicl::intermediate_table table;
   std::istringstream is{config};
-  //fhicl::parse_document(is, lookup, table);
-  table = fhicl::parse_document(is, lookup);
-  fhicl::ParameterSet pset;
-  pset = fhicl::ParameterSet::make(table);
-  static ArtServiceHelper helper{fully_processed(std::move(pset))};
+  auto table = fhicl::parse_document(is, lookup);
+  static ArtServiceHelper helper{fully_processed(fhicl::ParameterSet::make(table))};
 }
