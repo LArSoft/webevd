@@ -6,10 +6,9 @@
 #  buildtool [-I /install/path] -bt[i] -jN
 # ======================================================================
 
-cmake_minimum_required (VERSION 3.12...3.18 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 
-project(webevd LANGUAGES CXX)
-set(webevd_CMAKE_PROJECT_VERSION_STRING v09_30_00_rc1)
+project(webevd VERSION 09.05.07.01 LANGUAGES CXX)
 
 # cetbuildtools contains our cmake modules
 find_package(cetbuildtools REQUIRED)
