@@ -1,7 +1,7 @@
 set( evd_lib_list pthread
-                  canvas
-                  cetlib
-                  cetlib_except
+                  canvas::canvas
+                  cetlib::cetlib
+                  cetlib_except::cetlib_except
                   gallery
                   nusimdata_SimulationBase
                   lardataobj_RecoBase

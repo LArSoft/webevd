@@ -1,22 +1,22 @@
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 
 # TODO rationalize
-set( evd_lib_list ${ART_FRAMEWORK_CORE}
-                  ${ART_FRAMEWORK_PRINCIPAL}
-                  ${ART_ROOT_IO}
-                  ${ART_ROOT_IO_ROOTINPUT_SOURCE}
+set( evd_lib_list art::Framework_Core
+                  art::Framework_Principal
+                  art_root_io::art_root_io
+                  art_root_io::RootInput_source
                   ${ROOT_BASIC_LIB_LIST}
-                  canvas
-                  cetlib
-                  cetlib_except
+                  canvas::canvas
+                  cetlib::cetlib
+                  cetlib_except::cetlib_except
                   larcorealg_Geometry
                   lardataobj_RawData
                   lardataobj_RecoBase
                   lardataalg_DetectorInfo
                   nusimdata_SimulationBase
-                  art_Persistency_Common
-                  art_Persistency_Provenance
-                  ${MF_MESSAGELOGGER}
+                  art::Persistency_Common
+                  art::Persistency_Provenance
+                  messagefacility::MF_MessageLogger
                   png
                   z # zlib
                   pthread
