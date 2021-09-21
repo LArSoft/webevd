@@ -9,14 +9,14 @@
 art_make(
   LIB_LIBRARIES
     art_Framework_EventProcessor
-    art_Framework_Services_Registry
-    art_Utilities
-    canvas
+    art::Framework_Services_Registry
+    art::Utilities
+    canvas::canvas
     fhiclcpp
-    cetlib
-    cetlib_except
+    cetlib::cetlib
+    cetlib_except::cetlib_except
     ${Boost_SYSTEM_LIBRARY}
-    ${ROOT_CORE}
+    ROOT::Core
 )
 
 install_headers()

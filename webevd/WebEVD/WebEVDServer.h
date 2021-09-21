@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "art/Framework/Principal/Event.h"
+
 namespace geo{class GeometryCore;}
 namespace detinfo{class DetectorPropertiesData;}
 
