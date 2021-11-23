@@ -847,7 +847,7 @@ template<class T> int WebEVDServer<T>::EnsureListen()
   std::cout << "ssh -L "
             << port << ":localhost:" << port << " "
             << user << "@" << host << std::endl << std::endl;
-  std::cout << "and then navigate to localhost:" << port << " in your favorite browser." << std::endl << std::endl;
+  std::cout << "and then navigate to http://localhost:" << port << "/ in your favorite browser." << std::endl << std::endl;
   //  std::cout << "Press Ctrl-C here when done." << std::endl;
 
   return 0;
