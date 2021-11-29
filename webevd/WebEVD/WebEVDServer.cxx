@@ -891,10 +891,9 @@ protected:
           const geo::PlaneID plane(wire);
 
           const geo::WireID w0 = fGeom->GetBeginWireID(plane);
-          const unsigned int Nw = fGeom->Nwires(plane);
 
           if(fImgs[tag].count(plane) == 0){
-            fImgs[tag].emplace(plane, PNGView(fArena, Nw, dig.Samples()));
+            fImgs[tag].emplace(plane, PNGView(fArena));
           }
 
           PNGView& bytes = fImgs[tag].find(plane)->second;
@@ -973,10 +972,9 @@ protected:
           const geo::PlaneID plane(wire);
 
           const geo::WireID w0 = fGeom->GetBeginWireID(plane);
-          const unsigned int Nw = fGeom->Nwires(plane);
 
           if(fImgs[tag].count(plane) == 0){
-            fImgs[tag].emplace(plane, PNGView(fArena, Nw, rbwire.NSignal()));
+            fImgs[tag].emplace(plane, PNGView(fArena));
           }
 
           PNGView& bytes = fImgs[tag].find(plane)->second;

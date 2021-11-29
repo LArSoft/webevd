@@ -161,8 +161,7 @@ namespace evd
   }
 
   // --------------------------------------------------------------------------
-  PNGView::PNGView(PNGArena& a, int w, int h)
-    : arena(a), width(w), height(h), blocks(w/PNGArena::kBlockSize+1, std::vector<png_byte*>(h/PNGArena::kBlockSize+1, 0))
+  PNGView::PNGView(PNGArena& a) : arena(a)
   {
   }
 

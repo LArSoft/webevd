@@ -69,20 +69,24 @@ namespace evd
   class PNGView
   {
   public:
-    PNGView(PNGArena& a, int w, int h);
+    explicit PNGView(PNGArena& a);
 
     inline png_byte& operator()(int x, int y, int c)
     {
-      const int ix = x/PNGArena::kBlockSize;
-      const int iy = y/PNGArena::kBlockSize;
+      const unsigned int ix = x/PNGArena::kBlockSize;
+      const unsigned int iy = y/PNGArena::kBlockSize;
+      if(ix >= blocks.size()) blocks.resize(ix+1);
+      if(iy >= blocks[ix].size()) blocks[ix].resize(iy+1, 0);
       if(!blocks[ix][iy]) blocks[ix][iy] = arena.NewBlock();
       return blocks[ix][iy][((y-iy*PNGArena::kBlockSize)*PNGArena::kArenaSize+(x-ix*PNGArena::kBlockSize))*4+c];
     }
 
     inline png_byte operator()(int x, int y, int c) const
     {
-      const int ix = x/PNGArena::kBlockSize;
-      const int iy = y/PNGArena::kBlockSize;
+      const unsigned int ix = x/PNGArena::kBlockSize;
+      const unsigned int iy = y/PNGArena::kBlockSize;
+      if(ix >= blocks.size()) return 0;
+      if(iy >= blocks[ix].size()) return 0;
       if(!blocks[ix][iy]) return 0;
       return blocks[ix][iy][((y-iy*PNGArena::kBlockSize)*PNGArena::kArenaSize+(x-ix*PNGArena::kBlockSize))*4+c];
     }
@@ -91,7 +95,7 @@ namespace evd
     friend JSONFormatter& operator<<(JSONFormatter&, const PNGView&);
 
     PNGArena& arena;
-    int width, height;
+
     std::vector<std::vector<png_byte*>> blocks;
   };
 
