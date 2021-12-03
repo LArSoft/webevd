@@ -13,8 +13,6 @@ project(webevd VERSION 09.07.00 LANGUAGES CXX)
 # cetbuildtools contains our cmake modules
 find_package(cetbuildtools REQUIRED)
 
-list(APPEND CMAKE_MODULE_PATH $ENV{CANVAS_ROOT_IO_DIR}/Modules $ENV{ART_DIR}/Modules)
-
 include(CetCMakeEnv)
 cet_cmake_env()
 
@@ -26,11 +24,16 @@ cet_set_compiler_flags(DIAGS CAUTIOUS
 
 cet_report_compiler_flags()
 
+find_package(cetlib_except REQUIRED PUBLIC)
+find_package(cetlib REQUIRED PUBLIC)
+find_package(canvas REQUIRED PUBLIC)
+find_package(canvas_root_io REQUIRED)
+find_package(gallery REQUIRED PUBLIC)
+find_package(art REQUIRED PUBLIC)
+find_package(art_root_io REQUIRED PUBLIC)
+find_package(nusimdata REQUIRED PUBLIC)
+find_package(ROOT COMPONENTS Core REQUIRED PUBLIC)
 # these are minimum required versions, not the actual product versions
-find_ups_product( nusimdata )
-find_ups_product( gallery )
-find_ups_product( art )
-find_ups_product( art_root_io )
 find_ups_product( larcoreobj )
 find_ups_product( larcorealg )
 find_ups_product( larcore )
