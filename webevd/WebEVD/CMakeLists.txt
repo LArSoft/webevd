@@ -5,7 +5,7 @@ set( evd_lib_list art::Framework_Core
                   art::Framework_Principal
                   art_root_io::art_root_io
                   art_root_io::RootInput_source
-                  ${ROOT_BASIC_LIB_LIST}
+                  ROOT::Core
                   canvas::canvas
                   cetlib::cetlib
                   cetlib_except::cetlib_except
@@ -13,14 +13,14 @@ set( evd_lib_list art::Framework_Core
                   lardataobj_RawData
                   lardataobj_RecoBase
                   lardataalg_DetectorInfo
-                  nusimdata_SimulationBase
+                  nusimdata::SimulationBase
                   art::Persistency_Common
                   art::Persistency_Provenance
                   messagefacility::MF_MessageLogger
                   png
                   z # zlib
                   pthread
-                  gallery
+                  gallery::gallery
                   )
 
 art_make( BASENAME_ONLY

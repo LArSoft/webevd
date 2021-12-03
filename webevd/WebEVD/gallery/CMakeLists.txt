@@ -2,8 +2,8 @@ set( evd_lib_list pthread
                   canvas::canvas
                   cetlib::cetlib
                   cetlib_except::cetlib_except
-                  gallery
-                  nusimdata_SimulationBase
+                  gallery::gallery
+                  nusimdata::SimulationBase
                   lardataobj_RecoBase
                   webevd_ArtSupport
                   png

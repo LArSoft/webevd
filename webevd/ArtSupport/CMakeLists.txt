@@ -15,7 +15,6 @@ art_make(
     fhiclcpp
     cetlib::cetlib
     cetlib_except::cetlib_except
-    ${Boost_SYSTEM_LIBRARY}
     ROOT::Core
 )
 
