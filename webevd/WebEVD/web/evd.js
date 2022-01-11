@@ -1088,6 +1088,24 @@ ThreeDControls();
 // Try to pre-load all textures - doesn't work
 //renderer.compile(scene, camera);
 
+window.Save = function(){
+    // Ensure the frame is in the drawing buffer
+    animate();
+    let img = renderer.domElement.toDataURL("image/png");
+
+    let link = document.createElement('a');
+
+    link.href = img;
+
+    link.download = ('evd' +
+                     '.r' + document.getElementById('runbox').value +
+                     '.s' + document.getElementById('subrunbox').value +
+                     '.e' + document.getElementById('evtbox').value +
+                     '.png');
+
+    link.click();
+}
+
 let animStart = null;
 let animFunc = null;
 
