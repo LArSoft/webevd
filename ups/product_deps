@@ -34,9 +34,9 @@ flcdir  product_dir     fcl
 # These versions are based on the versions set up by larsoft v08_48_01
 
 product         version
-lardata         v09_07_01
+lardata         v09_07_02
 gallery         v1_18_04
-cetbuildtools   v8_18_09  -  only_for_build
+cetbuildtools   v8_19_02  -  only_for_build
 end_product_list
 
 # We now define allowed qualifiers and the corresponding qualifiers for the depdencies.
