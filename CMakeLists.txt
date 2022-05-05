@@ -41,6 +41,8 @@ find_ups_product( lardataobj )
 find_ups_product( lardataalg )
 find_ups_product( lardata )
 
+find_ups_product( sbnobj ) # TODO sort out dependency structure
+
 # macros for dictionary and simple_plugin
 include(ArtDictionary)
 include(ArtMake)

@@ -34,6 +34,8 @@
 #include "larcorealg/Geometry/GeometryCore.h"
 #include "lardataalg/DetectorInfo/DetectorPropertiesData.h"
 
+#include "sbnobj/Common/CRT/CRTHit.hh" // TODO sort out dependency structure
+
 #include <sys/types.h>
 #include <sys/socket.h>
 //#include <netinet/in.h>
@@ -481,6 +483,15 @@ JSONFormatter& operator<<(JSONFormatter& json, const geo::AuxDetGeo& auxdet)
 }
 
 // ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const sbn::crt::CRTHit& hit)
+{
+  std::map<std::string, TVector3> props;
+  props["center"] = TVector3(hit.x_pos, hit.y_pos, hit.z_pos);
+  props["err"] = TVector3(hit.x_err, hit.y_err, hit.z_err);
+  return json << props;
+}
+
+// ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& os, const PNGView& v)
 {
   bool first = true;
@@ -795,6 +806,7 @@ template<class T> void _HandleGetJSON(std::string doc, int sock, const T* evt, c
   else if(doc == "/trajs.json")       SerializeProductByLabel<simb::MCParticle>(*evt, "largeant", json);
   else if(doc == "/mctruth.json")     SerializeProduct<simb::MCTruth>(*evt, json);
   else if(doc == "/opflashes.json")   SerializeProduct<recob::OpFlash>(*evt, json);
+  else if(doc == "/crthits.json")     SerializeProduct<sbn::crt::CRTHit>(*evt, json);
   else if(doc == "/hits.json")        SerializeHits(*evt, geom, json);
   else if(doc == "/geom.json")        SerializeGeometry(geom, *detprop, json);
   else if(doc == "/digs.json")        digs->Serialize(json);
