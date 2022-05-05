@@ -56,6 +56,7 @@ let auxdets = geom.then(geom => geom.auxdets);
 
 let truth_trajs = fetch("trajs.json").then(response => response.json());
 let xhits = fetch("hits.json").then(response => response.json());
+let crthits = fetch("crthits.json").then(response => response.json());
 let tracks = fetch("tracks.json").then(response => response.json());
 let spacepoints = fetch("spacepoints.json").then(response => response.json());
 let reco_vtxs = fetch("vtxs.json").then(response => response.json());
@@ -557,6 +558,29 @@ async function handle_hits(xhits_promise, planes_promise){
 }
 
 handle_hits(xhits, planes);
+
+
+crthits.then(crthits => {
+    for(let label in crthits){
+        let vvtxs = [];
+        let vidxs = [];
+        for(let hit of crthits[label]){
+            push_icosahedron_vtxs(ArrToVec(hit.center), 5, vvtxs, vidxs);
+        }
+
+        let vgeom = new THREE.BufferGeometry();
+        vgeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vvtxs), 3));
+        vgeom.setIndex(new THREE.BufferAttribute(new Uint16Array(vidxs), 1));
+        let vtxs = new THREE.Mesh(vgeom, mat_auxdet);
+        for(let i = 0; i < kNLayers; ++i) vtxs.layers.enable(i);
+        scene.add(vtxs);
+
+        console.log(vvtxs);
+        AddDropdownToggle('crthits_dropdown', vtxs, label);
+    }
+
+    requestAnimationFrame(animate);
+}); // end "then" (crthits)
 
 
 reco_vtxs.then(reco_vtxs => {
