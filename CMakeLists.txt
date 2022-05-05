@@ -8,7 +8,7 @@
 
 cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 
-project(webevd VERSION 09.08.07 LANGUAGES CXX)
+project(webevd VERSION 09.08.08 LANGUAGES CXX)
 
 # cetbuildtools contains our cmake modules
 find_package(cetbuildtools REQUIRED)
