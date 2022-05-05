@@ -52,6 +52,7 @@ let geom = fetch("geom.json").then(response => response.json());
 let planes = geom.then(geom => geom.planes);
 let cryos = geom.then(geom => geom.cryos);
 let opdets = geom.then(geom => geom.opdets);
+let auxdets = geom.then(geom => geom.auxdets);
 
 let truth_trajs = fetch("trajs.json").then(response => response.json());
 let xhits = fetch("hits.json").then(response => response.json());
@@ -95,6 +96,8 @@ function ArrToVec(arr)
 let mat_lin = new THREE.LineBasicMaterial({color: 'gray'});
 
 let mat_geo = new THREE.LineBasicMaterial({color: 'darkred'});
+
+let mat_auxdet = new THREE.LineBasicMaterial({color: 'darkgreen'});
 
 let mat_hit = new THREE.MeshBasicMaterial({color: 'gray', side: THREE.DoubleSide});
 
@@ -695,6 +698,55 @@ opdets.then(opdets => {
     requestAnimationFrame(animate);
 });
 
+let auxdetgroup = new THREE.Group();
+AddDropdownToggle('physical_dropdown', auxdetgroup, 'AuxDets', false);
+let auxdetlabels_div = document.getElementById('auxdetlabels_div');
+
+auxdets.then(auxdets => {
+    // Physical Auxdets
+    for(let auxdet of auxdets){
+        // Don't bother to draw the overall auxdet, the array of sensitive
+        // elements gives a more accurate impression anyway.
+
+        // let boxgeom = new THREE.BoxBufferGeometry(auxdet.width, auxdet.height, auxdet.length);
+
+        // let edges = new THREE.EdgesGeometry(boxgeom);
+        // let line = new THREE.LineSegments(edges, mat_auxdet);
+
+        let c = ArrToVec(auxdet.center);
+        // line.position.set(c.x, c.y, c.z);
+        // line.updateMatrixWorld();
+
+        // for(let i = 0; i < kNLayers; ++i) line.layers.enable(i);
+
+        // auxdetgroup.add(line);
+
+        let d = document.createElement('div');
+        d.className = 'label';
+        d.appendChild(document.createTextNode(auxdet.name));
+        d.pos = c; // stash the 3D position on the HTML element
+        auxdetlabels_div.appendChild(d);
+
+        for(let sens of auxdet.sensitive){
+            let boxgeom = new THREE.BoxBufferGeometry(sens.width, sens.height, sens.length);
+
+            let edges = new THREE.EdgesGeometry(boxgeom);
+            let line = new THREE.LineSegments(edges, mat_auxdet);
+
+            let c = ArrToVec(sens.center);
+            line.position.set(c.x, c.y, c.z);
+            line.updateMatrixWorld();
+
+            for(let i = 0; i < kNLayers; ++i) line.layers.enable(i);
+
+            auxdetgroup.add(line);
+        } // end for sens
+    }
+
+    scene.add(auxdetgroup);
+    requestAnimationFrame(animate);
+});
+
 function is_iterable(value){return Symbol.iterator in Object(value);}
 
 // 'what' may be a single object or an array of objects to be handled together
@@ -1052,6 +1104,7 @@ function animate() {
 
     PaintAxes();
     if(opdetlabels_div.style.display != "none") PaintLabels(opdetlabels_div);
+    if(auxdetlabels_div.style.display != "none") PaintLabels(auxdetlabels_div);
     if(tpclabels_div.style.display != "none") PaintLabels(tpclabels_div);
     for(let label of flashlabels_div.children){
         if(label.style.display != "none") PaintLabels(label);
@@ -1312,6 +1365,7 @@ window.WireCmAxes   = function(){SetAxesType(AXES_WIRECM);}
 window.WireTickAxes = function(){SetAxesType(AXES_WIRETICK);}
 
 AddDropdownToggle('labels_dropdown', opdetlabels_div, 'OpDets', false);
+AddDropdownToggle('labels_dropdown', auxdetlabels_div, 'AuxDets', false);
 AddDropdownToggle('labels_dropdown', tpclabels_div, 'TPCs', false);
 
 function OnClick()
