@@ -446,6 +446,41 @@ JSONFormatter& operator<<(JSONFormatter& json, const geo::OpDetGeo& opdet)
 }
 
 // ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const geo::AuxDetSensitiveGeo& auxdet)
+{
+  return json << "{ \"center\": " << TVector3(auxdet.GetCenter().X(),
+                                              auxdet.GetCenter().Y(),
+                                              auxdet.GetCenter().Z()) << ", "
+              << "\"length\": " << auxdet.Length() << ", "
+              << "\"width\": " << 2 * std::max(auxdet.HalfWidth1(), auxdet.HalfWidth2()) << ", "
+              << "\"height\": " << 2 * auxdet.HalfHeight() << " }";
+}
+
+// ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const geo::AuxDetGeo& auxdet)
+{
+  std::string name = auxdet.Name();
+  if(name.find("volAuxDet") == 0) name.erase(0, 9);
+
+  json << "{ \"name\": \"" << name << "\", "
+       << "\"center\": " << TVector3(auxdet.GetCenter().X(),
+                                     auxdet.GetCenter().Y(),
+                                     auxdet.GetCenter().Z()) << ", "
+       << "\"length\": " << auxdet.Length() << ", "
+       << "\"width\": " << 2 * std::max(auxdet.HalfWidth1(), auxdet.HalfWidth2()) << ", "
+       << "\"height\": " << 2 * auxdet.HalfHeight() << ", ";
+
+  json << "\"sensitive\": [\n";
+  for(unsigned int i = 0; i < auxdet.NSensitiveVolume(); ++i){
+    json << "      " << auxdet.SensitiveVolume(i);
+    if(i != auxdet.NSensitiveVolume()-1) json << ",\n"; else json << "\n";
+  }
+  json << "  ]\n";
+
+  return json << " }";
+}
+
+// ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& os, const PNGView& v)
 {
   bool first = true;
@@ -616,7 +651,15 @@ void SerializeGeometry(const geo::GeometryCore* geom,
     json << "    " << geom->OpDetGeoFromOpDet(i);
     if(i != geom->NOpDets()-1) json << ",\n"; else json << "\n";
   }
+  json << "  ],\n\n";
+
+  json << "  \"auxdets\": [\n";
+  for(unsigned int i = 0; i < geom->NAuxDets(); ++i){
+    json << "    " << geom->AuxDet(i);
+    if(i != geom->NAuxDets()-1) json << ",\n"; else json << "\n";
+  }
   json << "  ]\n";
+
   json << "}\n";
 }
 
