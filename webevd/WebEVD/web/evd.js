@@ -101,7 +101,7 @@ let mat_hit = new THREE.MeshBasicMaterial({color: 'gray', side: THREE.DoubleSide
 
 let mat_sps = new THREE.MeshBasicMaterial({color: 'blue'});
 
-let mat_edeps = new THREE.MeshBasicMaterial({color: 'blue'});
+let mat_edeps = new THREE.LineBasicMaterial({color: 'blue'});
 
 let mat_flash = new THREE.MeshBasicMaterial({color: 'yellow', opacity: 0.5, transparent: true});
 
@@ -751,6 +751,7 @@ spacepoints.then(spacepoints => {
 // add_tracks is run.
 let color_map = {};
 let colors = ['blue', 'skyblue', 'orange', 'magenta', 'green', 'purple', 'pink', 'red', 'violet', 'yellow'];
+let colIdx = 0;
 let neutral_particles = [22, 111, 2112, 311];
 
 function is_neutral(pdg)
@@ -765,20 +766,38 @@ function is_neutral(pdg)
 simedeps.then(simedeps => {
     for(let label in simedeps){
         let edvtxs = [];
+        let edcols = [];
 
         for(let edep of simedeps[label]){
-            if(edep.edep > 0 && !is_neutral(edep.pdg)){
-                edvtxs.push(edep.start[0], edep.start[1], edep.start[2],
-                            edep.end[0], edep.end[1], edep.end[2]);
+            if(edep.edep == 0 || is_neutral(edep.pdg)) continue;
+
+            edvtxs.push(edep.start[0], edep.start[1], edep.start[2],
+                        edep.end[0], edep.end[1], edep.end[2]);
+
+            let col = 'white';
+
+            // Figure out a colour
+            if(edep.pdg in color_map){
+                col = color_map[edep.pdg];
             }
-        }
+            else{
+                col = colors[colIdx % colors.length];
+                colIdx += 1;
+                color_map[edep.pdg] = col;
+            }
+
+            let c = new THREE.Color(col);
+            edcols.push(c.r, c.g, c.b, c.r, c.g, c.b);
+        } // end for edep
 
         if(edvtxs.length == 0) continue;
 
         let geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(edvtxs), 3));
 
-        let line = new THREE.LineSegments(geom, mat_edeps);
+        geom.setAttribute('color', new THREE.BufferAttribute(new Float32Array(edcols), 3));
+
+        let line = new THREE.LineSegments(geom, new THREE.LineBasicMaterial({vertexColors: THREE.VertexColors, linewidth: 2}));
 
         for(let i = 0; i < kNLayers; ++i) line.layers.enable(i);
         scene.add(line);
@@ -792,7 +811,6 @@ simedeps.then(simedeps => {
 
 function add_tracks(trajs, group, must_be_charged)
 {
-    let colIdx = 0;
     for(let track of trajs){
         let col = 'white';
         let track_pdg = 'pdg' in track ? track.pdg : -1;
