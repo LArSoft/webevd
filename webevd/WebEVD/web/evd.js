@@ -562,21 +562,30 @@ handle_hits(xhits, planes);
 
 crthits.then(crthits => {
     for(let label in crthits){
-        let vvtxs = [];
-        let vidxs = [];
+        let crthitgroup = new THREE.Group();
+
         for(let hit of crthits[label]){
-            push_icosahedron_vtxs(ArrToVec(hit.center), 5, vvtxs, vidxs);
+            // Some errors are currently set to zero. Inflate them for
+            // visibility
+            let boxgeom = new THREE.BoxBufferGeometry(Math.max(hit.err[0], 1),
+                                                      Math.max(hit.err[1], 1),
+                                                      Math.max(hit.err[2], 1));
+
+            let edges = new THREE.EdgesGeometry(boxgeom);
+            let line = new THREE.LineSegments(edges, mat_auxdet);
+
+            let c = ArrToVec(hit.center);
+            line.position.set(c.x, c.y, c.z);
+            line.updateMatrixWorld();
+
+            for(let i = 0; i < kNLayers; ++i) line.layers.enable(i);
+
+            crthitgroup.add(line);
         }
 
-        let vgeom = new THREE.BufferGeometry();
-        vgeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vvtxs), 3));
-        vgeom.setIndex(new THREE.BufferAttribute(new Uint16Array(vidxs), 1));
-        let vtxs = new THREE.Mesh(vgeom, mat_auxdet);
-        for(let i = 0; i < kNLayers; ++i) vtxs.layers.enable(i);
-        scene.add(vtxs);
+        scene.add(crthitgroup);
 
-        console.log(vvtxs);
-        AddDropdownToggle('crthits_dropdown', vtxs, label);
+        AddDropdownToggle('crthits_dropdown', crthitgroup, label);
     }
 
     requestAnimationFrame(animate);
