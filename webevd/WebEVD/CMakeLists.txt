@@ -30,7 +30,6 @@ art_make( BASENAME_ONLY
         )
 
 install_headers()
-install_fhicl()
 install_source()
 
 set( ${product}_webevd_dir "${product}/${version}/webevd/" )
@@ -38,3 +37,4 @@ file(GLOB webevd_files web/* )
 install( FILES ${webevd_files} DESTINATION ${${product}_webevd_dir} )
 
 ADD_SUBDIRECTORY(gallery)
+add_subdirectory(fcl)
