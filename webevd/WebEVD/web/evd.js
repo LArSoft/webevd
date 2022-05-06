@@ -54,6 +54,7 @@ let cryos = geom.then(geom => geom.cryos);
 let opdets = geom.then(geom => geom.opdets);
 
 let truth_trajs = fetch("trajs.json").then(response => response.json());
+let simedeps = fetch("simedep.json").then(response => response.json());
 let xhits = fetch("hits.json").then(response => response.json());
 let tracks = fetch("tracks.json").then(response => response.json());
 let spacepoints = fetch("spacepoints.json").then(response => response.json());
@@ -99,6 +100,8 @@ let mat_geo = new THREE.LineBasicMaterial({color: 'darkred'});
 let mat_hit = new THREE.MeshBasicMaterial({color: 'gray', side: THREE.DoubleSide});
 
 let mat_sps = new THREE.MeshBasicMaterial({color: 'blue'});
+
+let mat_edeps = new THREE.MeshBasicMaterial({color: 'blue'});
 
 let mat_flash = new THREE.MeshBasicMaterial({color: 'yellow', opacity: 0.5, transparent: true});
 
@@ -757,6 +760,35 @@ function is_neutral(pdg)
 
     return false;
 }
+
+
+simedeps.then(simedeps => {
+    for(let label in simedeps){
+        let edvtxs = [];
+
+        for(let edep of simedeps[label]){
+            if(edep.edep > 0 && !is_neutral(edep.pdg)){
+                edvtxs.push(edep.start[0], edep.start[1], edep.start[2],
+                            edep.end[0], edep.end[1], edep.end[2]);
+            }
+        }
+
+        if(edvtxs.length == 0) continue;
+
+        let geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(edvtxs), 3));
+
+        let line = new THREE.LineSegments(geom, mat_edeps);
+
+        for(let i = 0; i < kNLayers; ++i) line.layers.enable(i);
+        scene.add(line);
+
+        AddDropdownToggle('simedeps_dropdown', line, label);
+
+        requestAnimationFrame(animate);
+    }
+}); // end then (simedeps)
+
 
 function add_tracks(trajs, group, must_be_charged)
 {
