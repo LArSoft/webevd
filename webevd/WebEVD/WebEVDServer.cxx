@@ -25,6 +25,8 @@
 #include "lardataobj/RecoBase/Track.h"
 #include "lardataobj/RecoBase/Vertex.h"
 
+#include "lardataobj/Simulation/SimEnergyDeposit.h"
+
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 
@@ -376,6 +378,22 @@ JSONFormatter& operator<<(JSONFormatter& json, const simb::MCTruth& mct)
 }
 
 // ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const geo::Point_t& pt)
+{
+  return json << TVector3(pt.X(), pt.Y(), pt.Z());
+}
+
+// ----------------------------------------------------------------------------
+JSONFormatter& operator<<(JSONFormatter& json, const sim::SimEnergyDeposit& edep)
+{
+  return json << "{\"pdg\": " << edep.PdgCode() << ", "
+              << "\"start\": " << edep.Start() << ", "
+              << "\"end\": " << edep.End() << ", "
+              << "\"edep\": " << edep.Energy()
+              << "}";
+}
+
+// ----------------------------------------------------------------------------
 JSONFormatter& operator<<(JSONFormatter& json, const recob::SpacePoint& sp)
 {
   return json << TVector3(sp.XYZ());
@@ -497,11 +515,11 @@ SerializeProduct(const TEvt& evt, JSONFormatter& json)
   const std::vector<art::InputTag> tags = evt.template getInputTags<std::vector<TProd>>();
 
   for(const art::InputTag& tag: tags){
-    json << "  " << tag << ": ";
-
     typename TEvt::template HandleT<std::vector<TProd>> prods; // deduce handle type
     // This can fail in the case of dropped products
     if(!evt.getByLabel(tag, prods)) continue;
+
+    json << "  " << tag << ": ";
 
     json << *prods;
 
@@ -751,6 +769,7 @@ template<class T> void _HandleGetJSON(std::string doc, int sock, const T* evt, c
   else if(doc == "/vtxs.json")        SerializeProduct<recob::Vertex>(*evt, json);
   else if(doc == "/trajs.json")       SerializeProductByLabel<simb::MCParticle>(*evt, "largeant", json);
   else if(doc == "/mctruth.json")     SerializeProduct<simb::MCTruth>(*evt, json);
+  else if(doc == "/simedep.json")     SerializeProduct<sim::SimEnergyDeposit>(*evt, json);
   else if(doc == "/opflashes.json")   SerializeProduct<recob::OpFlash>(*evt, json);
   else if(doc == "/hits.json")        SerializeHits(*evt, geom, json);
   else if(doc == "/geom.json")        SerializeGeometry(geom, *detprop, json);
