@@ -1,4 +1,4 @@
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR} ) ### MIGRATE-ACTION-RECOMMENDED (migrate-3.13.00) - avoid directory-scope functions: use target_link_libraries() with target semantics or target_include_directories() whenever possible
 
 # TODO rationalize
 set( evd_lib_list art::Framework_Core
@@ -27,12 +27,12 @@ art_make( BASENAME_ONLY
           LIB_LIBRARIES ${evd_lib_list}
           MODULE_LIBRARIES ${evd_lib_list} webevd_WebEVD InputSeeker_service
           SERVICE_LIBRARIES ${evd_lib_list} webevd_WebEVD
-        )
+        ) ### MIGRATE-ACTION-RECOMMENDED (migrate-3.13.00) - deprecated: use art_make_library(), art_dictonary(), and cet_build_plugin() with explicit source lists and plugin base types
 
 install_headers()
 install_source()
 
-set( ${product}_webevd_dir "${product}/${version}/webevd/" )
+set( ${product}_webevd_dir "webevd/" )
 file(GLOB webevd_files web/* )
 install( FILES ${webevd_files} DESTINATION ${${product}_webevd_dir} )
 
