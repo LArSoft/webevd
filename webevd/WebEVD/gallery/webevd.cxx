@@ -20,121 +20,6 @@ void usage()
   exit(1);
 }
 
-enum class EDetector{
-  kUnknown,
-  kDUNEFDHD,
-  kDUNEFDVD,
-  kProtoDUNESP,
-  kSBND,
-  kIcarus
-};
-
-std::ostream& operator<<(std::ostream& os, EDetector det)
-{
-  switch(det){
-  case EDetector::kUnknown:     os << "unknown";              return os;
-  case EDetector::kDUNEFDHD:    os << "DUNE far detector HD"; return os;
-  case EDetector::kDUNEFDVD:    os << "DUNE far detector VD"; return os;
-  case EDetector::kProtoDUNESP: os << "ProtoDUNE SP";         return os;
-  case EDetector::kSBND:        os << "SBND";                 return os;
-  case EDetector::kIcarus:      os << "ICARUS";               return os;
-  default:
-    std::cerr << "Unknown detector enum " << int(det) << std::endl;
-    abort();
-  }
-}
-
-EDetector DetectorFromArgument(const std::string& d)
-{
-  if(d == "fd" ||
-     d == "fardet" ||
-     d == "dune10kt") return EDetector::kDUNEFDHD;
-
-  if(d == "fdvd" ||
-     d == "vd") return EDetector::kDUNEFDVD;
-
-  if(d == "pd" ||
-     d == "protodune" ||
-     d == "np04") return EDetector::kProtoDUNESP;
-
-  if(d == "sbnd") return EDetector::kSBND;
-
-  if(d == "icarus") return EDetector::kIcarus;
-
-  return EDetector::kUnknown;
-}
-
-EDetector DetectorFromFilename(const std::string& fname)
-{
-  const std::map<std::string, EDetector> auto_fname_mapping = {
-    {"dune10kt", EDetector::kDUNEFDHD},
-    {"1x2x6",    EDetector::kDUNEFDHD},
-    // TODO what to use to autodetect DUNE VD filenames?
-    {"np04",     EDetector::kProtoDUNESP},
-    {"sbnd",     EDetector::kSBND},
-    {"icarus",   EDetector::kIcarus}
-  };
-
-  for(auto it: auto_fname_mapping){
-    if(fname.find(it.first) != std::string::npos) return it.second;
-  }
-
-  return EDetector::kUnknown;
-}
-
-std::string FCLConfigForDetector(EDetector det)
-{
-  std::string fclConfig;
-
-  switch(det){
-  case EDetector::kDUNEFDHD:
-    fclConfig +=
-      "#include \"services_dune.fcl\"\n"
-      "@table::dunefd_services\n"
-      "Geometry.GDML: \"dune10kt_v1_1x2x6.gdml\"\n";
-    // TODO why is it necessary to manually specify the GDML?
-    break;
-
-  case EDetector::kDUNEFDVD:
-    fclConfig +=
-      "#include \"services_dune.fcl\"\n"
-      "@table::protodunedphase_simulation_services\n";
-    break;
-
-  case EDetector::kProtoDUNESP:
-    fclConfig +=
-      "#include \"services_dune.fcl\"\n"
-      "@table::protodune_services\n";
-    break;
-
-  case EDetector::kSBND:
-    fclConfig +=
-      "#include \"services_sbnd.fcl\"\n"
-      "@table::sbnd_services\n";
-    break;
-
-  case EDetector::kIcarus:
-    fclConfig +=
-      "#include \"services_common_icarus.fcl\"\n"
-      "@table::icarus_common_services\n";
-    break;
-
-  default:
-    std::cout << "Don't know how to configure services for " << det << std::endl;
-    abort();
-  }
-
-  fclConfig +=
-    "message: @erase                  \n"
-    "scheduler: @erase                \n"
-    "BackTrackerService: @erase       \n"
-    "PhotonBackTrackerService: @erase \n"
-    "LArFFT: @erase                   \n"
-    "TFileService: @erase             \n";
-
-  return fclConfig;
-}
-
 // We use a function try block to catch and report on all exceptions.
 int main(int argc, char** argv)
 {
@@ -142,7 +27,8 @@ int main(int argc, char** argv)
   --argc;
   ++argv;
 
-  EDetector det = EDetector::kUnknown;
+  bool detKnown = false;
+  bool isFD = false;
 
   int tgt_run = -1, tgt_subrun = -1, tgt_evt = -1;
 
@@ -152,9 +38,11 @@ int main(int argc, char** argv)
 
       const std::string d(argv[1]);
 
-      det = DetectorFromArgument(argv[1]);
+      detKnown = true;
 
-      if(det == EDetector::kUnknown){
+      if(d == "fd" || d == "fardet" || d == "dune10kt") isFD = true;
+      else if(d == "pd" || d == "protodune" || d == "np04") isFD = false;
+      else{
         std::cout << "Unrecognized detector '" << d << "'" << std::endl;
         return 1;
       }
@@ -209,15 +97,24 @@ int main(int argc, char** argv)
 
   const std::vector<std::string> filenames(argv, argv + argc);
 
-  if(det == EDetector::kUnknown){
-    det = DetectorFromFilename(filenames[0]);
-
-    if(det == EDetector::kUnknown){
+  if(!detKnown){
+    if(filenames[0].find("dune10kt") != std::string::npos ||
+       filenames[0].find("1x2x6") != std::string::npos){
+      isFD = true;
+      detKnown = true;
+    }
+    else if(filenames[0].find("np04") != std::string::npos){
+      isFD = false;
+      detKnown = true;
+    }
+    else{
       std::cout << "Unable to auto-detect detector from filename. Please specify it explicitly with -d" << std::endl;
       return 1;
     }
 
-    std::cout << "Auto-detected geometry as " << det << std::endl;
+    std::cout << "Auto-detected geometry as ";
+    if(isFD) std::cout << "far detector"; else std::cout << "ProtoDUNE SP";
+    std::cout << std::endl;
   }
 
   // Prototype for automatically configuring the geometry below. Dumps the
@@ -226,7 +123,25 @@ int main(int argc, char** argv)
 
   evd::WebEVDServer<evd::ThreadsafeGalleryEvent> server;
 
-  ArtServiceHelper::load_services(FCLConfigForDetector(det));
+  std::string fclConfig = "#include \"services_dune.fcl\"\n";
+  if(isFD){
+    fclConfig +=
+      "@table::dunefd_services\n"
+      "Geometry.GDML: \"dune10kt_v1_1x2x6.gdml\"\n";
+    // TODO why is it necessary to manually specify the GDML?
+  }
+  else{
+    fclConfig +=
+      "@table::protodune_services\n";
+  }
+
+  fclConfig +=
+    "BackTrackerService: @erase       \n"
+    "PhotonBackTrackerService: @erase \n"
+    "LArFFT: @erase                   \n"
+    "TFileService: @erase             \n";
+
+  ArtServiceHelper::load_services(fclConfig);
 
   const geo::GeometryCore* geom = art::ServiceHandle<geo::Geometry>()->provider();
   const detinfo::DetectorPropertiesData detprop = art::ServiceHandle<detinfo::DetectorPropertiesService>()->DataForJob();
