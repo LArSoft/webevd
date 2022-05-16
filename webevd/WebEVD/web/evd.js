@@ -503,6 +503,10 @@ let com = planes.then(planes => {
         com.add(ArrToVec(planes[key].center));
         nplanes += 1; // javascript is silly and doesn't have any good size() method
     }
+
+    // Fallback for no-APA case: look at the origin
+    if(nplanes == 0) return com;
+
     com.divideScalar(nplanes);
     return com;
 });
