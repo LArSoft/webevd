@@ -1,40 +1,68 @@
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
+cet_make_library(LIBRARY_NAME ThreadsafeGalleryEvent INTERFACE
+  SOURCE ThreadsafeGalleryEvent.h
+  LIBRARIES INTERFACE
+  gallery::gallery
+  Threads::Threads
+)
 
-# TODO rationalize
-set( evd_lib_list art::Framework_Core
-                  art::Framework_Principal
-                  art_root_io::art_root_io
-                  art_root_io::RootInput_source
-                  ROOT::Core
-                  canvas::canvas
-                  cetlib::cetlib
-                  cetlib_except::cetlib_except
-                  larcorealg_Geometry
-                  lardataobj_RawData
-                  lardataobj_RecoBase
-                  lardataalg_DetectorInfo
-                  nusimdata::SimulationBase
-                  art::Persistency_Common
-                  art::Persistency_Provenance
-                  messagefacility::MF_MessageLogger
-                  png
-                  z # zlib
-                  pthread
-                  gallery::gallery
-                  )
+cet_make_library(LIBRARY_NAME JSONFormatter INTERFACE
+  SOURCE JSONFormatter.h
+  LIBRARIES INTERFACE
+  ROOT::Physics
+)
 
-art_make( BASENAME_ONLY
-          LIB_LIBRARIES ${evd_lib_list}
-          MODULE_LIBRARIES ${evd_lib_list} webevd_WebEVD InputSeeker_service
-          SERVICE_LIBRARIES ${evd_lib_list} webevd_WebEVD
-        )
+cet_make_library(BASENAME_ONLY
+  SOURCE
+  PNGArena.cxx
+  TruthText.cxx
+  WebEVDServer.cxx
+  LIBRARIES
+  PUBLIC
+  art::Framework_Principal
+  PRIVATE
+  webevd::JSONFormatter
+  webevd::ThreadsafeGalleryEvent
+  lardataalg::DetectorInfo
+  lardataobj::RawData
+  lardataobj::RecoBase
+  lardataobj::Simulation
+  larcorealg::Geometry
+  nusimdata::SimulationBase
+  gallery::gallery
+  fhiclcpp::fhiclcpp
+  PNG::PNG
+  ROOT::Core
+  Threads::Threads
+  ZLIB::ZLIB
+)
+
+cet_build_plugin(InputSeeker art::service
+  LIBRARIES
+  PRIVATE
+  art_root_io::RootInput_source
+)
+
+cet_build_plugin(WebEVD art::EDAnalyzer
+  LIBRARIES PRIVATE
+  webevd::WebEVD_InputSeeker_service
+  webevd::WebEVD
+  lardata::DetectorPropertiesService
+  larcore::Geometry_Geometry_service
+  art::Framework_Services_Registry
+  fhiclcpp::fhiclcpp
+)
 
 install_headers()
 install_source()
 
-set( ${product}_webevd_dir "${product}/${version}/webevd/" )
-file(GLOB webevd_files web/* )
-install( FILES ${webevd_files} DESTINATION ${${product}_webevd_dir} )
+project_variable(WEB_DIR webevd CONFIG DOCSTRING "\
+Location of WebEVD web support files\
+")
 
-ADD_SUBDIRECTORY(gallery)
+file(GLOB webevd_files web/* )
+install(FILES ${webevd_files}
+  DESTINATION ${${CETMODULES_CURRENT_PROJECT_NAME}_WEB_DIR}
+)
+
+add_subdirectory(gallery)
 add_subdirectory(fcl)
