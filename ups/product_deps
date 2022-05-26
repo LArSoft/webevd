@@ -250,8 +250,8 @@ libdir	fq_dir		lib
 ####################################
 product		version		qual	flags		<table_format=2>
 gallery		v1_18_04	-
-lardata		v09_08_04	-
-cetmodules	v3_13_00	-	only_for_build
+lardata		v09_08_05	-
+cetmodules	v3_13_02	-	only_for_build
 end_product_list
 ####################################
 
