@@ -4,21 +4,18 @@
 
 #include "art_root_io/RootInput.h"
 
-namespace evd
-{
+namespace evd {
   //--------------------------------------------------------------------
-  InputSeeker::InputSeeker(const fhicl::ParameterSet&,
-                           art::ActivityRegistry& reg)
+  InputSeeker::InputSeeker(const fhicl::ParameterSet&, art::ActivityRegistry& reg)
   {
     reg.sPostBeginJobWorkers.watch(this, &InputSeeker::postBeginJobWorkers);
   }
 
   //--------------------------------------------------------------------
-  void InputSeeker::postBeginJobWorkers(art::InputSource* src,
-                                        const std::vector<art::Worker*>&)
+  void InputSeeker::postBeginJobWorkers(art::InputSource* src, const std::vector<art::Worker*>&)
   {
     fSrc = dynamic_cast<art::RootInput*>(src);
-    if(!fSrc){
+    if (!fSrc) {
       std::cout << "InputSource is not RootInput -- will not be able to seek backward" << std::endl;
     }
   }
@@ -26,7 +23,7 @@ namespace evd
   //--------------------------------------------------------------------
   void InputSeeker::seekToEvent(int offset)
   {
-    if(!fSrc){
+    if (!fSrc) {
       std::cout << "Unable to seek" << std::endl;
       return;
     }
@@ -36,7 +33,7 @@ namespace evd
   //--------------------------------------------------------------------
   void InputSeeker::seekToEvent(art::EventID evt)
   {
-    if(!fSrc){
+    if (!fSrc) {
       std::cout << "Unable to seek" << std::endl;
       return;
     }

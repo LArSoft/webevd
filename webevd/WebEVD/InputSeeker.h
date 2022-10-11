@@ -3,13 +3,15 @@
 
 #include "art/Framework/Services/Registry/ServiceDeclarationMacros.h"
 
-namespace art{class InputSource; class RootInput; class Worker;}
+namespace art {
+  class InputSource;
+  class RootInput;
+  class Worker;
+}
 
-namespace evd
-{
+namespace evd {
   /// This is obviously a hack, but it's modeled on what EventDisplayBase does
-  class InputSeeker
-  {
+  class InputSeeker {
   public:
     InputSeeker(const fhicl::ParameterSet& pset, art::ActivityRegistry& reg);
 
@@ -17,8 +19,7 @@ namespace evd
     void seekToEvent(art::EventID evt);
 
   protected:
-    void postBeginJobWorkers(art::InputSource* src,
-                             const std::vector<art::Worker*>& workers);
+    void postBeginJobWorkers(art::InputSource* src, const std::vector<art::Worker*>& workers);
 
     art::RootInput* fSrc;
   };

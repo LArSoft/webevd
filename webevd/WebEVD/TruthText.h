@@ -3,10 +3,11 @@
 
 #include <string>
 
-namespace simb{class MCTruth;}
+namespace simb {
+  class MCTruth;
+}
 
-namespace evd
-{
+namespace evd {
   std::string MCTruthShortText(const simb::MCTruth& truth);
 }
 

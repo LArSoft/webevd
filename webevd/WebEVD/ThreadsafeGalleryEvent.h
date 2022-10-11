@@ -5,29 +5,26 @@
 
 #include <mutex>
 
-namespace evd
-{
+namespace evd {
   /// gallery::Event is not designed to be threadsafe. Serializing calls
   /// through this wrapper should be more efficient than giving up on threading
   /// as a whole. This way we can still write and transfer the PNGs in parallel
   /// for example.
-  class ThreadsafeGalleryEvent
-  {
+  class ThreadsafeGalleryEvent {
   public:
-    template<class PROD> using HandleT = gallery::Event::template HandleT<PROD>;
+    template <class PROD>
+    using HandleT = gallery::Event::template HandleT<PROD>;
 
-    ThreadsafeGalleryEvent(const gallery::Event* evt) : fEvt(evt)
-    {
-    }
+    ThreadsafeGalleryEvent(const gallery::Event* evt) : fEvt(evt) {}
 
-    template<class T>
+    template <class T>
     bool getByLabel(const art::InputTag& tag, gallery::Handle<T>& result) const
     {
       std::lock_guard guard(fLock);
       return fEvt->getByLabel(tag, result);
     }
 
-    template<class T>
+    template <class T>
     std::vector<art::InputTag> getInputTags() const
     {
       std::lock_guard guard(fLock);

@@ -19,10 +19,10 @@ namespace {
   }
 }
 
-ArtServiceHelper::ArtServiceHelper(fhicl::ParameterSet&& pset) :
-  activityRegistry_{},
-  sharedResources_{},
-  servicesManager_{std::move(pset), activityRegistry_, sharedResources_}
+ArtServiceHelper::ArtServiceHelper(fhicl::ParameterSet&& pset)
+  : activityRegistry_{}
+  , sharedResources_{}
+  , servicesManager_{std::move(pset), activityRegistry_, sharedResources_}
 {
   servicesManager_.forceCreation();
 }

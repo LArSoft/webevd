@@ -5,44 +5,43 @@
 
 #include "nusimdata/SimulationBase/MCTruth.h"
 
-namespace evd
-{
+namespace evd {
   // -------------------------------------------------------------------------
   /// Convert PDG code to a latex string (root-style)
   std::string LatexName(int pdgcode)
   {
-    switch(pdgcode){
-    case  22:   return "#gamma";
-    case -11:   return "e^{+}";
-    case  11:   return "e^{-}";
-    case  13:   return "#mu";
-    case -15:   return "#bar{#tau}";
-    case  15:   return "#tau";
-    case -13:   return "#bar{#mu}";
-    case  12:   return "#nu_{e}";
-    case  14:   return "#nu_{#mu}";
-    case  16:   return "#nu_{#tau}";
-    case -12:   return "#bar{#nu}_{e}";
-    case -14:   return "#bar{#nu}_{#mu}";
-    case -16:   return "#bar{#nu}_{#tau}";
-    case  111:  return "#pi^{0}";
-    case  211:  return "#pi^{+}";
-    case -211:  return "#pi^{-}";;
-    case  221:  return "#eta";
-    case  331:  return "#eta'";
-    case  130:  return "K^{0}_{L}";
-    case  310:  return "K^{0}_{S}";
-    case  311:  return "K^{0}";
-    case -311:  return "#bar{K}^{0}";
-    case  321:  return "K^{+}";
-    case -321:  return "K^{-}";
-    case  2112: return "n";
-    case  2212: return "p";
+    switch (pdgcode) {
+    case 22: return "#gamma";
+    case -11: return "e^{+}";
+    case 11: return "e^{-}";
+    case 13: return "#mu";
+    case -15: return "#bar{#tau}";
+    case 15: return "#tau";
+    case -13: return "#bar{#mu}";
+    case 12: return "#nu_{e}";
+    case 14: return "#nu_{#mu}";
+    case 16: return "#nu_{#tau}";
+    case -12: return "#bar{#nu}_{e}";
+    case -14: return "#bar{#nu}_{#mu}";
+    case -16: return "#bar{#nu}_{#tau}";
+    case 111: return "#pi^{0}";
+    case 211: return "#pi^{+}";
+    case -211: return "#pi^{-}"; ;
+    case 221: return "#eta";
+    case 331: return "#eta'";
+    case 130: return "K^{0}_{L}";
+    case 310: return "K^{0}_{S}";
+    case 311: return "K^{0}";
+    case -311: return "#bar{K}^{0}";
+    case 321: return "K^{+}";
+    case -321: return "K^{-}";
+    case 2112: return "n";
+    case 2212: return "p";
     case -2112: return "#bar{n}";
     case -2212: return "#bar{p}";
-    case  2224: return "#Delta^{++}";
-    case  3122: return "#Lambda^{0}";
-    case  3222: return "#Sigma^{+}";
+    case 2224: return "#Delta^{++}";
+    case 3122: return "#Lambda^{0}";
+    case 3222: return "#Sigma^{+}";
     case -3222: return "#Sigma^{-}";
 
     case 1000010020: return "^{2}H";
@@ -84,36 +83,30 @@ namespace evd
     case 1000561370: return "^{137}Ba";
     default:
       static char buf[256];
-      sprintf(buf,"X_{%d}", pdgcode);
+      sprintf(buf, "X_{%d}", pdgcode);
       return buf;
     }
     return 0;
   }
 
   // -------------------------------------------------------------------------
-  std::string sup(const std::string& a, const std::string& b)
-  {
-    return a+"<sup>"+b+"</sup>";
-  }
+  std::string sup(const std::string& a, const std::string& b) { return a + "<sup>" + b + "</sup>"; }
 
   // -------------------------------------------------------------------------
-  std::string sub(const std::string& a, const std::string& b)
-  {
-    return a+"<sub>"+b+"</sub>";
-  }
+  std::string sub(const std::string& a, const std::string& b) { return a + "<sub>" + b + "</sub>"; }
 
   // -------------------------------------------------------------------------
   std::string bar(const std::string& x)
   {
     // NB we escape the quote marks in the CSS because we know this is going to
     // be served as CSS and we don't sanitize it there.
-    return "<span style=\\\"text-decoration:overline\\\">"+x+"</span>";
+    return "<span style=\\\"text-decoration:overline\\\">" + x + "</span>";
   }
 
   // -------------------------------------------------------------------------
   std::string nucl(const std::string& A, const std::string& elem)
   {
-    return "<sup>"+A+"</sup>"+elem;
+    return "<sup>" + A + "</sup>" + elem;
   }
 
   // -------------------------------------------------------------------------
@@ -122,38 +115,38 @@ namespace evd
   {
     // NB we escape the quote marks in the CSS because we know this is going to
     // be served as CSS and we don't sanitize it there.
-    switch(pdgcode){
-    case  22:   return "&gamma;";
-    case -11:   return sup("e", "+");
-    case  11:   return sup("e", "-");
-    case  13:   return "&mu;";
-    case -15:   return bar("&tau;");
-    case  15:   return "&tau;";
-    case -13:   return bar("&mu;");
-    case  12:   return sub("&nu;", "e");
-    case  14:   return sub("&nu;", "&mu;");
-    case  16:   return sub("&nu;", "&tau;");
-    case -12:   return sub(bar("&nu;"), "e");
-    case -14:   return sub(bar("&nu;"), "&mu;");
-    case -16:   return sub(bar("&nu;"), "&tau;");
-    case  111:  return sup("&pi;", "0");
-    case  211:  return sup("&pi;", "+");
-    case -211:  return sup("&pi;", "-");
-    case  221:  return "&eta;";
-    case  331:  return "&eta;'";
-    case  130:  return sub(sup("K", "0"), "L");
-    case  310:  return sub(sup("K", "0"), "L");
-    case  311:  return sup("K", "0");
-    case -311:  return sup(bar("K"), "0");
-    case  321:  return sup("K", "+");
-    case -321:  return sup("K", "-");
-    case  2112: return "n";
-    case  2212: return "p";
+    switch (pdgcode) {
+    case 22: return "&gamma;";
+    case -11: return sup("e", "+");
+    case 11: return sup("e", "-");
+    case 13: return "&mu;";
+    case -15: return bar("&tau;");
+    case 15: return "&tau;";
+    case -13: return bar("&mu;");
+    case 12: return sub("&nu;", "e");
+    case 14: return sub("&nu;", "&mu;");
+    case 16: return sub("&nu;", "&tau;");
+    case -12: return sub(bar("&nu;"), "e");
+    case -14: return sub(bar("&nu;"), "&mu;");
+    case -16: return sub(bar("&nu;"), "&tau;");
+    case 111: return sup("&pi;", "0");
+    case 211: return sup("&pi;", "+");
+    case -211: return sup("&pi;", "-");
+    case 221: return "&eta;";
+    case 331: return "&eta;'";
+    case 130: return sub(sup("K", "0"), "L");
+    case 310: return sub(sup("K", "0"), "L");
+    case 311: return sup("K", "0");
+    case -311: return sup(bar("K"), "0");
+    case 321: return sup("K", "+");
+    case -321: return sup("K", "-");
+    case 2112: return "n";
+    case 2212: return "p";
     case -2112: return bar("n");
     case -2212: return bar("p");
-    case  2224: return sup("&Delta;", "++");
-    case  3122: return sup("&Lambda;", "0");
-    case  3222: return sup("&Sigma;", "+");
+    case 2224: return sup("&Delta;", "++");
+    case 3122: return sup("&Lambda;", "0");
+    case 3222: return sup("&Sigma;", "+");
     case -3222: return sup("&Sigma;", "-");
 
     case 1000010020: return nucl("2", "H");
@@ -201,10 +194,9 @@ namespace evd
   // --------------------------------------------------------------------------
   std::string ShortInteractionSuffix(int iType)
   {
-    switch(iType){
+    switch (iType) {
     case simb::kQE:
-    case simb::kCCQE:
-      return " (QE)";
+    case simb::kCCQE: return " (QE)";
 
     case simb::kRes:
     case simb::kResCCNuProtonPiPlus:
@@ -212,16 +204,13 @@ namespace evd
     case simb::kResCCNuNeutronPiPlus:
     case simb::kResCCNuBarNeutronPiMinus:
     case simb::kResCCNuBarProtonPi0:
-    case simb::kResCCNuBarProtonPiMinus:
-      return " (RES)";
+    case simb::kResCCNuBarProtonPiMinus: return " (RES)";
 
     case simb::kDIS:
-    case simb::kCCDIS:
-      return " (DIS)";
+    case simb::kCCDIS: return " (DIS)";
 
     case simb::kCoh:
-    case simb::kCCCOH:
-      return " (COH)";
+    case simb::kCCCOH: return " (COH)";
 
     case simb::kNCQE:
     case simb::kNCDIS:
@@ -232,14 +221,11 @@ namespace evd
     case simb::kResNCNuBarProtonPi0:
     case simb::kResNCNuBarProtonPiPlus:
     case simb::kResNCNuBarNeutronPi0:
-    case simb::kResNCNuBarNeutronPiMinus:
-      return " (NC)";
+    case simb::kResNCNuBarNeutronPiMinus: return " (NC)";
 
-    case simb::kElectronScattering:
-      return " (ES)";
+    case simb::kElectronScattering: return " (ES)";
 
-    case simb::kInverseBetaDecay:
-      return " (IBD)";
+    case simb::kInverseBetaDecay: return " (IBD)";
 
     default: // simb::kNuElectronElastic and simb::kInverseMuDecay
       return "";
@@ -253,35 +239,33 @@ namespace evd
     std::string incoming;
     std::string outgoing;
     // Label cosmic rays -- others are pretty obvious
-    if(truth.Origin() == simb::kCosmicRay) origin = "c-ray: ";
+    if (truth.Origin() == simb::kCosmicRay) origin = "c-ray: ";
 
-    for(int j = 0; j < truth.NParticles(); ++j){
+    for (int j = 0; j < truth.NParticles(); ++j) {
       const simb::MCParticle& p = truth.GetParticle(j);
 
       const unsigned int bufsize = 4096;
       char buf[bufsize];
 
-      if(p.P() > 0.05){
-        snprintf(buf, bufsize, "%s&nbsp;[%.1f GeV/c]",
-                 HTMLName(p.PdgCode()).c_str(), p.P());
+      if (p.P() > 0.05) {
+        snprintf(buf, bufsize, "%s&nbsp;[%.1f GeV/c]", HTMLName(p.PdgCode()).c_str(), p.P());
       }
-      else{
-        snprintf(buf, bufsize, "%s",
-                 HTMLName(p.PdgCode()).c_str());
+      else {
+        snprintf(buf, bufsize, "%s", HTMLName(p.PdgCode()).c_str());
       }
-      if(p.StatusCode() == 0){
-        if(!incoming.empty()) incoming += " + ";
+      if (p.StatusCode() == 0) {
+        if (!incoming.empty()) incoming += " + ";
         incoming += buf;
       }
-      if(p.StatusCode() == 1){
-        if(!outgoing.empty()) outgoing += " + ";
+      if (p.StatusCode() == 1) {
+        if (!outgoing.empty()) outgoing += " + ";
         outgoing += buf;
       }
     } // loop on j particles
 
-    if(origin.empty() && incoming.empty()) return outgoing;
+    if (origin.empty() && incoming.empty()) return outgoing;
 
     const std::string suffix = ShortInteractionSuffix(truth.GetNeutrino().InteractionType());
-    return origin+incoming+" &rarr; "+outgoing+suffix;
+    return origin + incoming + " &rarr; " + outgoing + suffix;
   }
 } // end namespace
