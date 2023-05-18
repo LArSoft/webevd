@@ -1,34 +1,7 @@
-#include "services_dune.fcl"
-
-#include "WebEVD.fcl"
-
-process_name: WebEVD
-
-source:
-{
-  module_type: RootInput
-}
+#include "webevdjob_fd.fcl"
 
 services:
 {
-  @table::dunefd_services
-  InputSeeker: {}
+    @table::services
+    @table::dunefd_1x2x6_services
 }
-
-# Faster
-services.BackTrackerService: @erase
-services.PhotonBackTrackerService: @erase
-
-physics:
-{
-  analyzers:
-  {
-    evd: @local::standard_webevd
-  }
-
-  evd_path: [ evd ]
-}
-
-services.Geometry.GDML: "dune10kt_v4_refactored_1x2x6.gdml"
-services.Geometry.Name: "dune10kt_v4_1x2x6"
-services.Geometry.ROOT: "dune10kt_v4_refactored_1x2x6.gdml"
