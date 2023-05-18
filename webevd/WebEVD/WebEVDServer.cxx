@@ -603,7 +603,7 @@ namespace evd {
            << "\"depth\": " << depth << ", "
            << "\"width\": " << width << ", "
            << "\"depthdir\": " << TVector3(depthdir.x(), depthdir.y(), depthdir.z()) << ", "
-           << "\"widthdir\": " << TVector3(widthdir.x(), widthdir.y(), widthdir.z()) << ", " 
+           << "\"widthdir\": " << TVector3(widthdir.x(), widthdir.y(), widthdir.z()) << ", "
            << "\"normal\": " << TVector3(n.x(), n.y(), n.z()) << "}";
     }
     json << "\n  }";
